@@ -1,7 +1,7 @@
 #ifndef CROSDATA_H
 #define CROSDATA_H
 
-#include <mmodel/mavlink.h>
+#include <common/mavlink.h>
 #include "filemanager.h"
 
 
@@ -20,9 +20,9 @@
 #include <px4_msgs/msg/uavcan_parameter_value.hpp>
 #include <px4_msgs/msg/monitoring.hpp>
 #include <px4_msgs/msg/log_message.hpp>
-#include <agent_msg/srv/command.hpp>
-#include <agent_msg/msg/agent_status.hpp>
-#include <agent_msg/msg/osmo2_status.hpp>
+//#include <agent_msg/srv/command.hpp>
+//#include <agent_msg/msg/agent_status.hpp>
+//#include <agent_msg/msg/osmo2_status.hpp>
 #include <spinworker.h>
 
 class IAgent;
@@ -62,15 +62,15 @@ public:
 
         PERI_5V_POWER_PROBLEM,
         TEMPERATURE_PROBLEM,
-		INAV_BIAS_XY_PROBLEM,
-		INAV_BIAS_Z_PROBLEM,
+        INAV_BIAS_XY_PROBLEM,
+        INAV_BIAS_Z_PROBLEM,
 
-		MAG_INCONSISTENT_PROBLEM,
-		ACC_INCONSISTENT_PROBLEM,
-		GYR_INCONSISTENT_PROBLEM,
-		AGE_CORR_LV1_PROBLEM,
+        MAG_INCONSISTENT_PROBLEM,
+        ACC_INCONSISTENT_PROBLEM,
+        GYR_INCONSISTENT_PROBLEM,
+        AGE_CORR_LV1_PROBLEM,
 
-		AGE_CORR_LV2_PROBLEM,
+        AGE_CORR_LV2_PROBLEM,
         STATUS_LANDED,
 
         NUM_OF_MONITORING
@@ -85,21 +85,21 @@ public:
     void initSubscription();
 
 public Q_SLOTS:
-    void onTimeout();
+            void onTimeout();
 
 public:
     void setAgent(IAgent* aAgent) {mAgent = aAgent;}
     void setFileManager(FileManager* aFTP) {mFTP = aFTP;}
     bool updateData(const QByteArray& aByteArray);
-	bool updateMsg(const mavlink_message_t& aMsg);
+    bool updateMsg(const mavlink_message_t& aMsg);
     void saveParam(const QString aName, QVariant value);
-	QVariant param(const QString aName);
-	void resetParams();
+    QVariant param(const QString aName);
+    void resetParams();
 //    void setBaseCoordinate(QGeoCoordinate qgeo);
 
-	void resetAck();
+    void resetAck();
     void setAckForROS(const uint16_t aCmd, uint8_t result);
-	int checkAck(const uint16_t aCmd);
+    int checkAck(const uint16_t aCmd);
     bool monitoringFlag(uint32_t aValue, uint aBit);
     QString strMonitoringEnum(MonitoringFlagType aType);
     QString strMonitoringStatus();
@@ -118,12 +118,12 @@ public:
     void updateVehicleCommandAck(const px4_msgs::msg::VehicleCommandAck::SharedPtr msg);
 
     void parameterValueCallback(const px4_msgs::msg::UavcanParameterValue::SharedPtr msg);
-    void osmoCallback(const agent_msg::msg::Osmo2Status::SharedPtr msg);
+//    void osmoCallback(const agent_msg::msg::Osmo2Status::SharedPtr msg);
     QList<QString> getParamRequested();
 
-    void agentManagerStatusCallback(const agent_msg::msg::AgentStatus::SharedPtr msg);
-    void sendStartStreamingCmd();
-    void sendStopStreamingCmd();
+//    void agentManagerStatusCallback(const agent_msg::msg::AgentStatus::SharedPtr msg);
+//    void sendStartStreamingCmd();
+//    void sendStopStreamingCmd();
     void sendOsmoCmd(const QString cmd, const QString args);
 
 public:
@@ -152,7 +152,7 @@ private:
     qint64                      mRecvTime_LocalPos = 0;
     qint64                      mRecvTime_Monitoring = 0;
     bool                        mCommFlag = false;
-    
+
     double                      mRoll = 0, mPitch = 0, mYaw = 0;
     double                      mTargetX, mTargetY, mTargetZ, mTargetH;
     double                      mTargetLat, mTargetLng, mTargetAlt, mTargetYaw;
@@ -164,7 +164,7 @@ private:
 //    px4_msgs::msg::VehicleLocalPosition         mVehicleLocalPosition;
 //    px4_msgs::msg::VehicleGlobalPosition        mVehicleGlobalPosition;
     px4_msgs::msg::Monitoring                   mMonitoringRos;
-    agent_msg::msg::Osmo2Status                 mOsmo;
+//    agent_msg::msg::Osmo2Status                 mOsmo;
     QQueue<px4_msgs::msg::LogMessage>           mLogMessageQueue;
 //    QGeoCoordinate                              base_coordinate = QGeoCoordinate(0,0,0);
     bool    mGstRunning;
@@ -174,10 +174,10 @@ private:
     // mavlink_gps_raw_int_t               mGPSRaw;
     // mavlink_vicon_position_estimate_t   mViconEst;
     // mavlink_position_target_local_ned_t mTargetLocal;
-	// mavlink_statustext_t				mStatusText;
-	// mavlink_attitude_t					mAttitude;
-	mavlink_gps_rtk_t					mRTK;
-	mavlink_command_ack_t				mAck;
+    // mavlink_statustext_t				mStatusText;
+    // mavlink_attitude_t					mAttitude;
+    mavlink_gps_rtk_t					mRTK;
+    mavlink_command_ack_t				mAck;
     // mavlink_monitoring_t                mMonitoring;
 
     QList<QString>                      param_requested;
@@ -191,7 +191,7 @@ private:
     rclcpp::Subscription<px4_msgs::msg::LogMessage>::SharedPtr mLogMessageSub_;
     rclcpp::Subscription<px4_msgs::msg::UavcanParameterValue>::SharedPtr mUavcanParameterValueSub_;
 //    rclcpp::Subscription<px4_msgs::msg::VehicleGlobalPosition>::SharedPtr mVehicleGlobalPositionSub_;
-    rclcpp::Subscription<agent_msg::msg::Osmo2Status>::SharedPtr mOsmoSub_;
+//    rclcpp::Subscription<agent_msg::msg::Osmo2Status>::SharedPtr mOsmoSub_;
 
     rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr mCommandQHACPub_;
     rclcpp::Publisher<px4_msgs::msg::UavcanParameterRequest>::SharedPtr mUavcanParameterRequestQHACPub_;
@@ -199,17 +199,17 @@ private:
 //    rclcpp::Publisher<px4_msgs::msg::VehicleLocalPositionSetpoint>::SharedPtr mVehicleLocalPositionSetpointQHACPub_;
 //    rclcpp::Publisher<px4_msgs::msg::TelemetryStatus>::SharedPtr mTelemetryStatusPub_;
 
-    rclcpp::Subscription<agent_msg::msg::AgentStatus>::SharedPtr mAgentStatusSub_;
-    rclcpp::Client<agent_msg::srv::Command>::SharedPtr agent_manager_client;
-    rclcpp::Client<agent_msg::srv::Command>::SharedPtr agent_osmo_client;
-    rclcpp::Client<agent_msg::srv::Command>::SharedFuture agent_manager_result;
+//    rclcpp::Subscription<agent_msg::msg::AgentStatus>::SharedPtr mAgentStatusSub_;
+//    rclcpp::Client<agent_msg::srv::Command>::SharedPtr agent_manager_client;
+//    rclcpp::Client<agent_msg::srv::Command>::SharedPtr agent_osmo_client;
+//    rclcpp::Client<agent_msg::srv::Command>::SharedFuture agent_manager_result;
 
     rclcpp::executors::SingleThreadedExecutor::SharedPtr mROS2Executor;
 
 
-     std::string                 ros2Header = "/agent";
+    std::string                 ros2Header = "/agent";
 
-     double                     init_pos_x = 0, init_pos_y = 0;
+    double                     init_pos_x = 0, init_pos_y = 0;
 };
 
 #endif // CROSDATA_H

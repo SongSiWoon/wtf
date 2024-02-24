@@ -15,7 +15,7 @@
 #include <QDir>
 #include <QTimer>
 #include <QQueue>
-#include <mmodel/mavlink.h>
+#include <common/mavlink.h>
 #include "agent.h"
 #include "mmodelagent.h"
 #include "mmodelcmdsender.h"

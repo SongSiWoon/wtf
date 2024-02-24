@@ -32,15 +32,16 @@
 
 #include <rclcpp/rclcpp.hpp>
 // #include "ros/ros.h"
-// #include <sensor_msgs/Image.h>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/compressed_image.hpp>
 // #include <mavros_msgs/RegisteredImage.h>
 // #include <mavros_msgs/RegisteredCompImage.h>
 // #include <mavros_msgs/PosLLH.h>
-#include <agent_msg/msg/registered_comp_image.hpp>
-#include <px4_msgs/msg/piksi_pos_llh.hpp>
+//#include <agent_msg/msg/registered_comp_image.hpp>
+//#include <px4_msgs/msg/piksi_pos_llh.hpp>
 
 namespace Ui {
-class MainWindow;
+    class MainWindow;
 }
 
 
@@ -73,28 +74,28 @@ protected:
     bool event(QEvent * event);
     void keyEvent(QKeyEvent * event);
 
-private:    
+private:
     void initManager();
     void subscribeROS2Topics();
     void procInitTreeWidget();
-    void procInitMainPanelWidget();    
-    void updateTreeData();	
+    void procInitMainPanelWidget();
+    void updateTreeData();
     void updateDronesInMap();
     void updateStatusText();
     void updateNotifier();
 
 private:    // ROS2 Topic
     rclcpp::Node::SharedPtr _ros2node;
-    rclcpp::Subscription<px4_msgs::msg::PiksiPosLLH>::SharedPtr _sub_piksi_posllh;
-    rclcpp::Subscription<agent_msg::msg::RegisteredCompImage>::SharedPtr _sub_regImg;
+//    rclcpp::Subscription<px4_msgs::msg::PiksiPosLLH>::SharedPtr _sub_piksi_posllh;
+//    rclcpp::Subscription<agent_msg::msg::RegisteredCompImage>::SharedPtr _sub_regImg;
     rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr _sub_agent_img;
-    void regiCompImageCallback(const agent_msg::msg::RegisteredCompImage::SharedPtr msg);
+//    void regiCompImageCallback(const agent_msg::msg::RegisteredCompImage::SharedPtr msg);
     void agentImgCallback(const sensor_msgs::msg::CompressedImage::SharedPtr msg);
-    void posLLHCallback(const px4_msgs::msg::PiksiPosLLH::SharedPtr msg);
+//    void posLLHCallback(const px4_msgs::msg::PiksiPosLLH::SharedPtr msg);
 
 
 private Q_SLOTS:
-    void updateUI();
+            void updateUI();
     void runScenario();
     void stopScenario();
     void loadConfigFile();
@@ -102,7 +103,7 @@ private Q_SLOTS:
     void runParamDialog();
     void runCalibration();
     void runMonitoringDialog();
-    void onAlarm(bool aCheckable);    
+    void onAlarm(bool aCheckable);
     void onControl();
     void onScenarioMode(bool aMode);
     void on_actionsendSC_triggered();

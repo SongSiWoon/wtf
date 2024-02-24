@@ -181,24 +181,24 @@ QVariant CROSData::data(const QString &aItem)
         return QString("");
 	}
 	else if (item == "RTK_TOW") {
-         return mMonitoringRos.utc_usec*0.001f;
+         return mMonitoringRos.tow*0.001f;
 	}
-    else if (item == "GLOBAL_LAT") {
-        return mMonitoringRos.lat;
+    else if (item == "GLOBAL_LAT") { //TODO: Monitoring LLA
+        return 0; //mMonitoringRos.lat;
     }
     else if (item == "GLOBAL_LON") {
-        return mMonitoringRos.lon;
+        return 0; //mMonitoringRos.lon;
     }
     else if (item == "GLOBAL_ALT") {
-        return mMonitoringRos.alt;
+        return 0; //mMonitoringRos.alt;
     }
     else if (item == "LLH" ) {
-        return QVector3D((double)mMonitoringRos.lat, (double)mMonitoringRos.lon, (double)mMonitoringRos.alt);
+        return QVector3D(0.0, 0.0, 0.0); //QVector3D((double)mMonitoringRos.lat, (double)mMonitoringRos.lon, (double)mMonitoringRos.alt);
     }
-	else if (item == "RTK_FIXED") {        
+	else if (item == "RTK_FIXED") {
          return monitoringFlag(mMonitoringRos.status1, RTKGPS_FIXED_MODE);
 	}
-    else if (item == "RTK_READY") {       
+    else if (item == "RTK_READY") {
          return monitoringFlag(mMonitoringRos.status1, RTKGPS_FIXED_MODE) == 1 ? "YES" : "NO";
     }
 	else if (item == "RTK_N") {
@@ -239,10 +239,10 @@ QVariant CROSData::data(const QString &aItem)
         return agentBaseAltDiff;
     }
     else if ( item == "PX4_OSMO_BATT") {
-        return QString("%1/%2").arg(mMonitoringRos.battery).arg(mOsmo.battery);
+        return QString("%1/%2").arg(0.0).arg(0.0);//arg(mMonitoringRos.battery).arg(mOsmo.battery);
     }
     else if ( item == "OSMO_BATT") {
-        return mOsmo.battery;
+        return 0.0; //mOsmo.battery;
     }
     else {
         return QString("--");
@@ -296,7 +296,7 @@ bool CROSData::updateData(const QByteArray &aByteArray)
         msgReceived = mavlink_parse_char(MAVLINK_COMM_1, cp, &message, &status);
         // TODO: error check
 
-        if ( msgReceived ) {            
+        if ( msgReceived ) {
             result = updateMsg(message);
         }
     }
@@ -390,7 +390,7 @@ void CROSData::update_param_value(const mavlink_message_t* aMsg)
 	mavlink_msg_param_value_decode(aMsg, &paramValue);
 
 	switch (paramValue.param_type ) {
-	case MAV_PARAM_TYPE_UINT8:        
+	case MAV_PARAM_TYPE_UINT8:
         memcpy(&u8_value, &paramValue.param_value, sizeof(u8_value));
         value = QVariant(u8_value);
 		break;
@@ -414,13 +414,13 @@ void CROSData::update_param_value(const mavlink_message_t* aMsg)
         memcpy(&i32_value, &paramValue.param_value, sizeof(i32_value));
         value = QVariant(i32_value);
 		break;
-	case MAV_PARAM_TYPE_INT64:        
+	case MAV_PARAM_TYPE_INT64:
         value = QVariant((quint64)paramValue.param_value);
 		break;
-	case MAV_PARAM_TYPE_REAL32:        
+	case MAV_PARAM_TYPE_REAL32:
         value = QVariant((float)paramValue.param_value);
 		break;
-	case MAV_PARAM_TYPE_REAL64:                
+	case MAV_PARAM_TYPE_REAL64:
         value = QVariant((double)paramValue.param_value);
 		break;
 
@@ -442,9 +442,9 @@ void CROSData::updateMonitoring(const px4_msgs::msg::Monitoring::SharedPtr msg)
     mMonitoringRos.pos_y = msg->pos_y + init_pos_x;
     mMonitoringRos.pos_z = msg->pos_z;
     mMonitoringRos.head = msg->head;
-    mMonitoringRos.lat = msg->lat;
-    mMonitoringRos.lon = msg->lon;
-    mMonitoringRos.alt = msg->alt;
+//    mMonitoringRos.lat = msg->lat;
+//    mMonitoringRos.lon = msg->lon;
+//    mMonitoringRos.alt = msg->alt;
     mMonitoringRos.rtk_nbase = msg->rtk_nbase;
     mMonitoringRos.rtk_nrover = msg->rtk_nrover;
     mMonitoringRos.status1 = msg->status1;
@@ -498,59 +498,59 @@ void CROSData::parameterValueCallback(const px4_msgs::msg::UavcanParameterValue:
     }
 }
 
-void CROSData::osmoCallback(const agent_msg::msg::Osmo2Status::SharedPtr msg)
-{
-    mOsmo.framerate = msg->framerate;
-    mOsmo.sensor = msg->sensor;
-    mOsmo.battery = msg->battery;
-}
-
-void CROSData::agentManagerStatusCallback(const agent_msg::msg::AgentStatus::SharedPtr msg) {
-    mGstRunning = msg->iswork_gstlaunch;
-}
-
-void CROSData::sendOsmoCmd(const QString cmd, const QString args) {
-    auto agent_osmo_request = std::make_shared<agent_msg::srv::Command::Request>();
-    agent_osmo_request->cmd = cmd.toStdString();
-    agent_osmo_request->args = args.toStdString();
-    agent_manager_result = agent_osmo_client->async_send_request(agent_osmo_request);
-}
-
-void CROSData::sendStartStreamingCmd() {
-    qDebug() << "sendStartStreamingCmd!!!";
-    auto agent_manager_request = std::make_shared<agent_msg::srv::Command::Request>();
-    agent_manager_request->cmd = "start_streaming";
-
-    // Hanvision
-//    agent_manager_request->args = QString("gst-launch-1.0 v4l2src device=\"/dev/video0\" ! \"video/x-raw, width=1920, height=1080, format=(string)UYVY\" ! tee name=t ! queue leaky=1 ! nvvidconv ! \"video/x-raw(memory:NVMM), format=(string)NV12\" ! videorate max-rate=10 ! nvv4l2h264enc maxperf-enable=1 bitrate=3000000 ! h264parse ! mp4mux ! filesink location=/home/karidrone/Videos/AGENT%1-%2.mp4 -e t. ! queue ! nvvidconv ! \"video/x-raw(memory:NVMM), width=(int)1280, height=(int)720, format=(string)NV12\" ! nvv4l2h264enc maxperf-enable=1 bitrate=1000000 preset-level=4 profile=4 iframeinterval=180 insert-sps-pps=true ! h264parse ! flvmux ! rtmpsink location=rtmp://live.hanvision.xyz/publish/kdrone%3").arg(std::to_string(mAgent->data("SYSID").toInt()).c_str()).arg(QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss")).arg(std::to_string(mAgent->id()).c_str()).toStdString().c_str();
-
-    // sysid
-//    agent_manager_request->args = QString("gst-launch-1.0 v4l2src device=\"/dev/video0\" ! \"video/x-raw, width=1920, height=1080, format=(string)UYVY\" ! nvvidconv ! \"video/x-raw(memory:NVMM), width=(int)640, height=(int)480, format=(string)NV12\" ! videorate max-rate=10 ! nvv4l2h264enc maxperf-enable=1 bitrate=1000000 ! h264parse ! rtph264pay config-interval=1 pt=96 ! udpsink host=143.248.101.117 port=%1").arg(std::to_string(mAgent->data("SYSID").toInt()+5000).c_str()).toStdString().c_str();
-
-    // sysid, eureka with width, height, bitrate, max_rate.
-//    int gst_width = 1920;
-//    int gst_height = 1080;
-//    int gst_bitrate = 100000;
-//    int gst_max_rate = 5;
-    // tcp
-//    agent_manager_request->args = QString("echo 111").toStdString().c_str();
-//    QString time_format = "-yyyyMMdd-HHmmss";
-//    QDateTime curDateTime = QDateTime::currentDateTime();
-//    agent_manager_request->args = QString("gst-launch-1.0 -v fdsrc ! tee name=t ! queue leaky=1 ! filesink location=/home/karidrone/Videos/AGENT%1.mp4 t. ! h264parse ! omxh264dec ! nvvidconv ! video/x-raw(memory:NVMM), width=(int)%2, height=(int)%3, format=(string)NV12 ! queue ! videorate max-rate=%4 ! nvv4l2h264enc maxperf-enable=1 bitrate=%5 preset-level=4 profile=4 iframeinterval=360 insert-sps-pps=true ! h264parse ! flvmux metadatacreator=$(date+%s%N) ! tcpclientsink host=143.248.69.53 port=%6")
-//            .arg(mAgent->data("SYSID").toString() + curDateTime.toString(time_format)).arg(gst_width).arg(gst_height).arg(gst_max_rate).arg(gst_bitrate).arg(std::to_string(mAgent->data("SYSID").toInt()+5000).c_str()).toStdString().c_str();
-//    qDebug() << agent_manager_request->args.c_str();
-
-    // udp
-//    agent_manager_request->args = QString("gst-launch-1.0 v4l2src device=\"/dev/video0\" ! \"video/x-raw, width=1920, height=1080, format=(string)UYVY\" ! nvvidconv ! \"video/x-raw(memory:NVMM), width=(int)%1, height=(int)%2, format=(string)NV12\" ! videorate max-rate=%3 ! nvv4l2h264enc maxperf-enable=1 bitrate=%4 preset-level=4 profile=4 iframeinterval=360 insert-sps-pps=true ! h264parse ! flvmux metadatacreator=$(date +%s%N) ! udpsink host=143.248.99.77 port=%5").arg(gst_width).arg(gst_height).arg(gst_max_rate).arg(gst_bitrate).arg(std::to_string(mAgent->data("SYSID").toInt()+5000).c_str()).toStdString().c_str();
-    agent_manager_result = agent_manager_client->async_send_request(agent_manager_request);
-}
-
-void CROSData::sendStopStreamingCmd() {
-    auto agent_manager_request = std::make_shared<agent_msg::srv::Command::Request>();
-    agent_manager_request->cmd = "kill_process";
-    agent_manager_request->args = "gst-launch-1.0";
-    agent_manager_result = agent_manager_client->async_send_request(agent_manager_request);
-}
+//void CROSData::osmoCallback(const agent_msg::msg::Osmo2Status::SharedPtr msg)
+//{
+//    mOsmo.framerate = msg->framerate;
+//    mOsmo.sensor = msg->sensor;
+//    mOsmo.battery = msg->battery;
+//}
+//
+//void CROSData::agentManagerStatusCallback(const agent_msg::msg::AgentStatus::SharedPtr msg) {
+//    mGstRunning = msg->iswork_gstlaunch;
+//}
+//
+//void CROSData::sendOsmoCmd(const QString cmd, const QString args) {
+//    auto agent_osmo_request = std::make_shared<agent_msg::srv::Command::Request>();
+//    agent_osmo_request->cmd = cmd.toStdString();
+//    agent_osmo_request->args = args.toStdString();
+//    agent_manager_result = agent_osmo_client->async_send_request(agent_osmo_request);
+//}
+//
+//void CROSData::sendStartStreamingCmd() {
+//    qDebug() << "sendStartStreamingCmd!!!";
+//    auto agent_manager_request = std::make_shared<agent_msg::srv::Command::Request>();
+//    agent_manager_request->cmd = "start_streaming";
+//
+//    // Hanvision
+////    agent_manager_request->args = QString("gst-launch-1.0 v4l2src device=\"/dev/video0\" ! \"video/x-raw, width=1920, height=1080, format=(string)UYVY\" ! tee name=t ! queue leaky=1 ! nvvidconv ! \"video/x-raw(memory:NVMM), format=(string)NV12\" ! videorate max-rate=10 ! nvv4l2h264enc maxperf-enable=1 bitrate=3000000 ! h264parse ! mp4mux ! filesink location=/home/karidrone/Videos/AGENT%1-%2.mp4 -e t. ! queue ! nvvidconv ! \"video/x-raw(memory:NVMM), width=(int)1280, height=(int)720, format=(string)NV12\" ! nvv4l2h264enc maxperf-enable=1 bitrate=1000000 preset-level=4 profile=4 iframeinterval=180 insert-sps-pps=true ! h264parse ! flvmux ! rtmpsink location=rtmp://live.hanvision.xyz/publish/kdrone%3").arg(std::to_string(mAgent->data("SYSID").toInt()).c_str()).arg(QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss")).arg(std::to_string(mAgent->id()).c_str()).toStdString().c_str();
+//
+//    // sysid
+////    agent_manager_request->args = QString("gst-launch-1.0 v4l2src device=\"/dev/video0\" ! \"video/x-raw, width=1920, height=1080, format=(string)UYVY\" ! nvvidconv ! \"video/x-raw(memory:NVMM), width=(int)640, height=(int)480, format=(string)NV12\" ! videorate max-rate=10 ! nvv4l2h264enc maxperf-enable=1 bitrate=1000000 ! h264parse ! rtph264pay config-interval=1 pt=96 ! udpsink host=143.248.101.117 port=%1").arg(std::to_string(mAgent->data("SYSID").toInt()+5000).c_str()).toStdString().c_str();
+//
+//    // sysid, eureka with width, height, bitrate, max_rate.
+////    int gst_width = 1920;
+////    int gst_height = 1080;
+////    int gst_bitrate = 100000;
+////    int gst_max_rate = 5;
+//    // tcp
+////    agent_manager_request->args = QString("echo 111").toStdString().c_str();
+////    QString time_format = "-yyyyMMdd-HHmmss";
+////    QDateTime curDateTime = QDateTime::currentDateTime();
+////    agent_manager_request->args = QString("gst-launch-1.0 -v fdsrc ! tee name=t ! queue leaky=1 ! filesink location=/home/karidrone/Videos/AGENT%1.mp4 t. ! h264parse ! omxh264dec ! nvvidconv ! video/x-raw(memory:NVMM), width=(int)%2, height=(int)%3, format=(string)NV12 ! queue ! videorate max-rate=%4 ! nvv4l2h264enc maxperf-enable=1 bitrate=%5 preset-level=4 profile=4 iframeinterval=360 insert-sps-pps=true ! h264parse ! flvmux metadatacreator=$(date+%s%N) ! tcpclientsink host=143.248.69.53 port=%6")
+////            .arg(mAgent->data("SYSID").toString() + curDateTime.toString(time_format)).arg(gst_width).arg(gst_height).arg(gst_max_rate).arg(gst_bitrate).arg(std::to_string(mAgent->data("SYSID").toInt()+5000).c_str()).toStdString().c_str();
+////    qDebug() << agent_manager_request->args.c_str();
+//
+//    // udp
+////    agent_manager_request->args = QString("gst-launch-1.0 v4l2src device=\"/dev/video0\" ! \"video/x-raw, width=1920, height=1080, format=(string)UYVY\" ! nvvidconv ! \"video/x-raw(memory:NVMM), width=(int)%1, height=(int)%2, format=(string)NV12\" ! videorate max-rate=%3 ! nvv4l2h264enc maxperf-enable=1 bitrate=%4 preset-level=4 profile=4 iframeinterval=360 insert-sps-pps=true ! h264parse ! flvmux metadatacreator=$(date +%s%N) ! udpsink host=143.248.99.77 port=%5").arg(gst_width).arg(gst_height).arg(gst_max_rate).arg(gst_bitrate).arg(std::to_string(mAgent->data("SYSID").toInt()+5000).c_str()).toStdString().c_str();
+//    agent_manager_result = agent_manager_client->async_send_request(agent_manager_request);
+//}
+//
+//void CROSData::sendStopStreamingCmd() {
+//    auto agent_manager_request = std::make_shared<agent_msg::srv::Command::Request>();
+//    agent_manager_request->cmd = "kill_process";
+//    agent_manager_request->args = "gst-launch-1.0";
+//    agent_manager_result = agent_manager_client->async_send_request(agent_manager_request);
+//}
 
 void CROSData::initSubscription()
 {
@@ -567,7 +567,7 @@ void CROSData::initSubscription()
     mVehicleCommandAckSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::VehicleCommandAck>(topic_prefix + "/vehicle_command_ack", qos, std::bind(&CROSData::updateVehicleCommandAck, this, _1));
     mLogMessageSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::LogMessage>(topic_prefix + "/log_message", qos, std::bind(&CROSData::updateLogMessage, this, _1));
     mUavcanParameterValueSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::UavcanParameterValue>(topic_prefix + "/uavcan_parameter_value", qos, std::bind(&CROSData::parameterValueCallback, this, _1));
-    mOsmoSub_ = mQHAC3Node->create_subscription<agent_msg::msg::Osmo2Status>(topic_prefix + "/osmo2", qos, std::bind(&CROSData::osmoCallback, this, _1));
+//    mOsmoSub_ = mQHAC3Node->create_subscription<agent_msg::msg::Osmo2Status>(topic_prefix + "/osmo2", qos, std::bind(&CROSData::osmoCallback, this, _1));
 
 
     // Publishers
@@ -578,9 +578,9 @@ void CROSData::initSubscription()
 
     // Agent Manager
     mGstRunning = false;
-    mAgentStatusSub_ = mQHAC3Node->create_subscription<agent_msg::msg::AgentStatus>(topic_prefix + "/agent_manager_status", qos, std::bind(&CROSData::agentManagerStatusCallback, this, _1));
-    agent_manager_client = mQHAC3Node->create_client<agent_msg::srv::Command>(topic_prefix + "/agent_manager");
-    agent_osmo_client = mQHAC3Node->create_client<agent_msg::srv::Command>(topic_prefix + "/control");
+//    mAgentStatusSub_ = mQHAC3Node->create_subscription<agent_msg::msg::AgentStatus>(topic_prefix + "/agent_manager_status", qos, std::bind(&CROSData::agentManagerStatusCallback, this, _1));
+//    agent_manager_client = mQHAC3Node->create_client<agent_msg::srv::Command>(topic_prefix + "/agent_manager");
+//    agent_osmo_client = mQHAC3Node->create_client<agent_msg::srv::Command>(topic_prefix + "/control");
 
     init_pos_x = mAgent->info("init_pos_x").toDouble();
     init_pos_y = mAgent->info("init_pos_y").toDouble();

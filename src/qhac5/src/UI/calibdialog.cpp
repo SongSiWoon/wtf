@@ -1,7 +1,7 @@
 #include "calibdialog.h"
 #include "manager.h"
 #include "agent.h"
-#include <mmodel/mavlink.h>
+#include <common/mavlink.h>
 
 
 CCalibDialog::CCalibDialog(CManager *aManager, QWidget *parent) :

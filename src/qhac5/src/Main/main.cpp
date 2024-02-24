@@ -11,8 +11,8 @@
 //#include <std_msgs/String.h>
 //#include <geometry_msgs/PoseStamped.h>
 #include <rclcpp/rclcpp.hpp>
-#include <agent_msg/msg/registered_comp_image.hpp>
-#include <px4_msgs/msg/piksi_pos_llh.hpp>
+//#include <agent_msg/msg/registered_comp_image.hpp>
+//#include <px4_msgs/msg/piksi_pos_llh.hpp>
 
 int main(int argc, char *argv[])
 {

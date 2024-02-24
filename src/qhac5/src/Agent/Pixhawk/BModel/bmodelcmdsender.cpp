@@ -10,31 +10,31 @@
 #define RAD2DEG		(57.0)
 #define DEG2RAD     (0.0174533)
 
-CBModelCmdSender::CBModelCmdSender(QObject* parent)    
-    : QObject(parent)
+CBModelCmdSender::CBModelCmdSender(QObject* parent)
+        : QObject(parent)
 {
 }
 
 CBModelCmdSender::CBModelCmdSender(CBModelAgent* aAgent, QObject* parent)
-	: QObject(parent)
+        : QObject(parent)
 {
-	mTargetX = 0.0f;
-	mTargetY = 0.0f;
-	mTargetZ = 0.0f;
-	mHead = 0.0;
+    mTargetX = 0.0f;
+    mTargetY = 0.0f;
+    mTargetZ = 0.0f;
+    mHead = 0.0;
 
     mTakeOffReady = false;
     mLandReady = false;
-	mGyroCalib = false;
+    mGyroCalib = false;
     mAccelCalib = false;
-	mLevelCalib = false;
-	mReboot = false;
+    mLevelCalib = false;
+    mReboot = false;
     mEmbeddedScenarioMode = true;
 
     mAgent = aAgent;
     mComm  = mAgent->comm();
 
-	mSysID = 255;
+    mSysID = 255;
     mTimeOutCount = 0;
 
     mPrevTime = 0;
@@ -138,10 +138,10 @@ void CBModelCmdSender::disarm()
 
 int CBModelCmdSender::reboot()
 {
-	mAgent->data()->resetAck();
-	mReboot = true;
+    mAgent->data()->resetAck();
+    mReboot = true;
 
-	return 0;
+    return 0;
 }
 
 int CBModelCmdSender::procArm()
@@ -182,65 +182,65 @@ int CBModelCmdSender::procReboot()
 
 int CBModelCmdSender::automode()
 {
-	// ros::ServiceClient set_mode_client = nh_bmodelcmdsender.serviceClient<mavros_msgs::SetMode>
-	// 	(("/agent" + std::to_string(mAgent->id()) + "/mavros/set_mode").c_str());
-	// mavros_msgs::SetMode offb_set_mode;
- //    offb_set_mode.request.custom_mode = "AUTO";
+    // ros::ServiceClient set_mode_client = nh_bmodelcmdsender.serviceClient<mavros_msgs::SetMode>
+    // 	(("/agent" + std::to_string(mAgent->id()) + "/mavros/set_mode").c_str());
+    // mavros_msgs::SetMode offb_set_mode;
+    //    offb_set_mode.request.custom_mode = "AUTO";
 
- //    if( set_mode_client.call(offb_set_mode) &&
- //        offb_set_mode.response.mode_sent){
- //        ROS_INFO("AUTO enabled");
- //    }
+    //    if( set_mode_client.call(offb_set_mode) &&
+    //        offb_set_mode.response.mode_sent){
+    //        ROS_INFO("AUTO enabled");
+    //    }
 
- //    mavlink_message_t message;
- //    mavlink_set_mode_t mode;
-
-
-	// mode.target_system = mAgent->sysID();
- //    //mode.base_mode = 189; //MAV_MODE_MANUAL_ARMED;         //209 0xD1
- //    // 189 0xBD, 1011 1101
- //    mode.base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED |
- //                     //MAV_MODE_FLAG_TEST_ENABLED |
- //                     MAV_MODE_FLAG_AUTO_ENABLED |
- //                     MAV_MODE_FLAG_GUIDED_ENABLED |
- //                     MAV_MODE_FLAG_STABILIZE_ENABLED |                
- //                     //MAV_MODE_FLAG_MANUAL_INPUT_ENABLED |
- //                     MAV_MODE_FLAG_SAFETY_ARMED ;
- //    if ( mAgent->info("mode") == QString("hils") ) {
- //        mode.base_mode |= MAV_MODE_FLAG_HIL_ENABLED;
- //    }
-
- //    mode.custom_mode = 262144;
-
- //    // make data
- //    mavlink_msg_set_mode_encode(mSysID,50, &message, &mode);
+    //    mavlink_message_t message;
+    //    mavlink_set_mode_t mode;
 
 
- //    // send data
-	// int len = transmit(message);
+    // mode.target_system = mAgent->sysID();
+    //    //mode.base_mode = 189; //MAV_MODE_MANUAL_ARMED;         //209 0xD1
+    //    // 189 0xBD, 1011 1101
+    //    mode.base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED |
+    //                     //MAV_MODE_FLAG_TEST_ENABLED |
+    //                     MAV_MODE_FLAG_AUTO_ENABLED |
+    //                     MAV_MODE_FLAG_GUIDED_ENABLED |
+    //                     MAV_MODE_FLAG_STABILIZE_ENABLED |
+    //                     //MAV_MODE_FLAG_MANUAL_INPUT_ENABLED |
+    //                     MAV_MODE_FLAG_SAFETY_ARMED ;
+    //    if ( mAgent->info("mode") == QString("hils") ) {
+    //        mode.base_mode |= MAV_MODE_FLAG_HIL_ENABLED;
+    //    }
 
- //    return len;
+    //    mode.custom_mode = 262144;
+
+    //    // make data
+    //    mavlink_msg_set_mode_encode(mSysID,50, &message, &mode);
+
+
+    //    // send data
+    // int len = transmit(message);
+
+    //    return len;
     return 0;
 }
 
 int CBModelCmdSender::offboard()
 {
-     const int PX4_CUSTOM_MAIN_MODE_OFFBOARD = 6;
+    const int PX4_CUSTOM_MAIN_MODE_OFFBOARD = 6;
 
-     int mode             = MAV_MODE_FLAG_SAFETY_ARMED |
-                            MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
-     if ( mAgent->info("mode") == QString("hils") ) {
-         mode            |= MAV_MODE_FLAG_HIL_ENABLED;
-     }
+    int mode             = MAV_MODE_FLAG_SAFETY_ARMED |
+                           MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    if ( mAgent->info("mode") == QString("hils") ) {
+        mode            |= MAV_MODE_FLAG_HIL_ENABLED;
+    }
 
-     auto offboard_cmd = px4_msgs::msg::VehicleCommand();
-     offboard_cmd.target_system = mAgent->sysID();
-     offboard_cmd.command = px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE;
-     offboard_cmd.confirmation = true;
-     offboard_cmd.param1 = mode;
-     offboard_cmd.param2 = PX4_CUSTOM_MAIN_MODE_OFFBOARD;
+    auto offboard_cmd = px4_msgs::msg::VehicleCommand();
+    offboard_cmd.target_system = mAgent->sysID();
+    offboard_cmd.command = px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE;
+    offboard_cmd.confirmation = true;
+    offboard_cmd.param1 = mode;
+    offboard_cmd.param2 = PX4_CUSTOM_MAIN_MODE_OFFBOARD;
 
-     mAgent->dataROS()->publishCommand(offboard_cmd);
+    mAgent->dataROS()->publishCommand(offboard_cmd);
     return 0;
 }
 
@@ -249,61 +249,61 @@ int CBModelCmdSender::automission()
     int mode             = MAV_MODE_FLAG_SAFETY_ARMED |
                            MAV_MODE_FLAG_AUTO_ENABLED;
 
-     auto posctl_cmd = px4_msgs::msg::VehicleCommand();
-     posctl_cmd.target_system = mAgent->sysID();
-     posctl_cmd.command = px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE;
-     posctl_cmd.confirmation = true;
-     posctl_cmd.param1 = mode;
-     posctl_cmd.param2 = 3;
+    auto posctl_cmd = px4_msgs::msg::VehicleCommand();
+    posctl_cmd.target_system = mAgent->sysID();
+    posctl_cmd.command = px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE;
+    posctl_cmd.confirmation = true;
+    posctl_cmd.param1 = mode;
+    posctl_cmd.param2 = 3;
 
-     mAgent->dataROS()->publishCommand(posctl_cmd);
+    mAgent->dataROS()->publishCommand(posctl_cmd);
     return 0;
 }
 
 int CBModelCmdSender::manual()
 {
-     const int PX4_CUSTOM_MAIN_MODE_MANUAL = 1;
+    const int PX4_CUSTOM_MAIN_MODE_MANUAL = 1;
 
-     int mode             = MAV_MODE_FLAG_SAFETY_ARMED |
-                            MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
-     if ( mAgent->info("mode") == QString("hils") ) {
-         mode            |= MAV_MODE_FLAG_HIL_ENABLED;
-     }
+    int mode             = MAV_MODE_FLAG_SAFETY_ARMED |
+                           MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    if ( mAgent->info("mode") == QString("hils") ) {
+        mode            |= MAV_MODE_FLAG_HIL_ENABLED;
+    }
 
-     auto manual_cmd = px4_msgs::msg::VehicleCommand();
-     manual_cmd.target_system = mAgent->sysID();
-     manual_cmd.command = MAV_CMD_DO_SET_MODE;
-     manual_cmd.confirmation = true;
-     manual_cmd.param1 = mode;
-     manual_cmd.param2 = PX4_CUSTOM_MAIN_MODE_MANUAL;
+    auto manual_cmd = px4_msgs::msg::VehicleCommand();
+    manual_cmd.target_system = mAgent->sysID();
+    manual_cmd.command = MAV_CMD_DO_SET_MODE;
+    manual_cmd.confirmation = true;
+    manual_cmd.param1 = mode;
+    manual_cmd.param2 = PX4_CUSTOM_MAIN_MODE_MANUAL;
 
-     mAgent->dataROS()->publishCommand(manual_cmd);
-     return 0;
+    mAgent->dataROS()->publishCommand(manual_cmd);
+    return 0;
 }
 
 int CBModelCmdSender::move(float aX, float aY, float aZ, float aHead)
 {
     mAgent->data()->updateTarget(aX, aY, aZ, aHead);
-	return 0;
+    return 0;
 }
 
 float CBModelCmdSender::target(CBModelCmdSender::Target aType)
 {
-	QMutexLocker locker(&mMutex);	
-	switch (aType ) {
-	case TARGET_X:
-		return mTargetX;
-		break;
-	case TARGET_Y:
-		return mTargetY;
-		break;
-	case TARGET_Z:
-		return mTargetZ;
-		break;
-	default:
-		qDebug("ERROR: Invalid target %d", aType);
-		break;
-	}
+    QMutexLocker locker(&mMutex);
+    switch (aType ) {
+        case TARGET_X:
+            return mTargetX;
+            break;
+        case TARGET_Y:
+            return mTargetY;
+            break;
+        case TARGET_Z:
+            return mTargetZ;
+            break;
+        default:
+            qDebug("ERROR: Invalid target %d", aType);
+            break;
+    }
     return 0;
 }
 
@@ -375,12 +375,12 @@ QList<QString> CBModelCmdSender::getParamRequested()
 
 void CBModelCmdSender::startStreamCmd()
 {
-    return mAgent->dataROS()->sendStartStreamingCmd();
+//    return mAgent->dataROS()->sendStartStreamingCmd();
 }
 
 void CBModelCmdSender::stopStreamCmd()
 {
-    return mAgent->dataROS()->sendStopStreamingCmd();
+//    return mAgent->dataROS()->sendStopStreamingCmd();
 }
 
 int CBModelCmdSender::setParam(const QString aName, const QVariant aValue)
@@ -390,42 +390,42 @@ int CBModelCmdSender::setParam(const QString aName, const QVariant aValue)
     std::copy(param_id.begin(), param_id.end(), paramrequest.param_id.data());
     paramrequest.message_type = px4_msgs::msg::UavcanParameterRequest::MESSAGE_TYPE_PARAM_SET;
 
-	switch (aValue.type()) {
-	case QVariant::Char:
-	{
-		int value = aValue.toInt();
-        paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_UINT8;
-        paramrequest.int_value = value;
-	}
-		break;
-	case QVariant::Int:
-	{
-		int value = aValue.toInt();
-        paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_INT64;
-        paramrequest.int_value = value;
-	}
-		break;
-	case QVariant::UInt:
-	{
-		unsigned int value = aValue.toUInt();
-        paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_UINT8;
-        paramrequest.int_value = value;
-	}
-		break;
-	case QVariant::Double:
-        paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_REAL32;
-        paramrequest.real_value = (float)aValue.toDouble();
-		break;
-    case QMetaType::Float:
-        paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_REAL32;
-        paramrequest.real_value = (float)aValue.toFloat();
-        break;
-	default:
-        qDebug("WARN: unknown type %d", aValue.type());
-        paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_REAL32;
-        paramrequest.real_value = (float)aValue.toDouble();
-		break;
-	}
+    switch (aValue.type()) {
+        case QVariant::Char:
+        {
+            int value = aValue.toInt();
+            paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_UINT8;
+            paramrequest.int_value = value;
+        }
+            break;
+        case QVariant::Int:
+        {
+            int value = aValue.toInt();
+            paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_INT64;
+            paramrequest.int_value = value;
+        }
+            break;
+        case QVariant::UInt:
+        {
+            unsigned int value = aValue.toUInt();
+            paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_UINT8;
+            paramrequest.int_value = value;
+        }
+            break;
+        case QVariant::Double:
+            paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_REAL32;
+            paramrequest.real_value = (float)aValue.toDouble();
+            break;
+        case QMetaType::Float:
+            paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_REAL32;
+            paramrequest.real_value = (float)aValue.toFloat();
+            break;
+        default:
+            qDebug("WARN: unknown type %d", aValue.type());
+            paramrequest.param_type = px4_msgs::msg::UavcanParameterRequest::PARAM_TYPE_REAL32;
+            paramrequest.real_value = (float)aValue.toDouble();
+            break;
+    }
 
     mAgent->dataROS()->publishRequestParam(paramrequest);
 
@@ -442,42 +442,42 @@ int CBModelCmdSender::calib_aceel()
 
 int CBModelCmdSender::calib_gyro()
 {
-	mAgent->data()->resetAck();
-	mGyroCalib = true;
+    mAgent->data()->resetAck();
+    mGyroCalib = true;
 
-	return 0;
+    return 0;
 }
 
 int CBModelCmdSender::calib_level()
 {
-	mAgent->data()->resetAck();
-	mLevelCalib = true;
+    mAgent->data()->resetAck();
+    mLevelCalib = true;
 
-	return 0;
+    return 0;
 }
 void CBModelCmdSender::onTimeout()
-{    
-	qint64 time = QDateTime::currentMSecsSinceEpoch();
-	if ( mPrevTime != 0 ) mTimerPeriod = time - mPrevTime;
+{
+    qint64 time = QDateTime::currentMSecsSinceEpoch();
+    if ( mPrevTime != 0 ) mTimerPeriod = time - mPrevTime;
     mPrevTime = time;
 
     if ( mTakeOffReady ) {
         mTimeOutCount++;
         this->procArm();
-		if ( mTimeOutCount > 20 || mAgent->data()->checkAck(MAV_CMD_COMPONENT_ARM_DISARM) == MAV_RESULT_ACCEPTED  ) {
-			mTakeOffReady = false;
-			mTimeOutCount = 0;
-		}
+        if ( mTimeOutCount > 20 || mAgent->data()->checkAck(MAV_CMD_COMPONENT_ARM_DISARM) == MAV_RESULT_ACCEPTED  ) {
+            mTakeOffReady = false;
+            mTimeOutCount = 0;
+        }
     }
-	else if ( mLandReady ) {
+    else if ( mLandReady ) {
         mTimeOutCount++;
         this->procDisarm();
-		if ( mTimeOutCount > 20 || mAgent->data()->checkAck(MAV_CMD_COMPONENT_ARM_DISARM) == MAV_RESULT_ACCEPTED ) {
+        if ( mTimeOutCount > 20 || mAgent->data()->checkAck(MAV_CMD_COMPONENT_ARM_DISARM) == MAV_RESULT_ACCEPTED ) {
             mLandReady = false;
             mTimeOutCount = 0;
         }
     }
-	else if ( mGyroCalib ) {
+    else if ( mGyroCalib ) {
         if ( mTimeOutCount % 5 == 0 ) {this->procCalibGyro();}
         mTimeOutCount++;
 
@@ -485,8 +485,8 @@ void CBModelCmdSender::onTimeout()
             mGyroCalib = false;
             mTimeOutCount = 0;
         }
-	}
-	else if ( mLevelCalib ) {
+    }
+    else if ( mLevelCalib ) {
         if ( mTimeOutCount % 5 == 0 ) {this->procCalibLevel();}
         mTimeOutCount++;
 
@@ -505,7 +505,7 @@ void CBModelCmdSender::onTimeout()
         }
 
     }
-	else if ( mReboot ) {
+    else if ( mReboot ) {
         if ( mTimeOutCount % 5 == 0 ) {this->procReboot();}
         mTimeOutCount++;
 
@@ -513,10 +513,10 @@ void CBModelCmdSender::onTimeout()
             mReboot = false;
             mTimeOutCount = 0;
         }
-	}
-	else {
+    }
+    else {
         if (!mEmbeddedScenarioMode) {
 //            target_offboard();
         }
-	}
+    }
 }

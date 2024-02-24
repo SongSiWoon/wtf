@@ -8,7 +8,7 @@
 
 #include <QTimer>
 #include <QObject>
-#include <mmodel/mavlink.h>
+#include <common/mavlink.h>
 #include <QColor>
 #include <QMutex>
 #include <QGeoCoordinate>

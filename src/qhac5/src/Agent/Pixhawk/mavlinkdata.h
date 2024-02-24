@@ -1,7 +1,7 @@
 #ifndef PIXHAWKDATA_H
 #define PIXHAWKDATA_H
 
-#include <mmodel/mavlink.h>
+#include <common/mavlink.h>
 #include "filemanager.h"
 
 

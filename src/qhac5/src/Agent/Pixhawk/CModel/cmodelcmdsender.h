@@ -21,7 +21,7 @@ class CCModelCmdSender : public QObject
 {
     Q_OBJECT
 public:
-	enum Target { TARGET_X, TARGET_Y, TARGET_Z, TARGET_HEAD };
+    enum Target { TARGET_X, TARGET_Y, TARGET_Z, TARGET_HEAD };
 public:
     explicit CCModelCmdSender(QObject* parent = 0);
     explicit CCModelCmdSender(CCModelAgent* aAgent, QObject* parent = 0);
@@ -35,17 +35,17 @@ public:
     void takeoff(double lat, double lng, double yaw, double altitude);
     void landing();
     void reposition(double lat, double lng, double yaw, double altitude);
-	int reboot();
+    int reboot();
     int offboard();
     int automission();
     int manual();
     int move(float aX, float aY, float aZ, float aHead);
     int requestParam(const QString aName);
-	int setParam(const QString aName, const QVariant aValue);
+    int setParam(const QString aName, const QVariant aValue);
     QList<QString> getParamRequested();
     int calib_aceel();
-	int calib_gyro();
-	int calib_level();
+    int calib_gyro();
+    int calib_level();
     float target(Target aType);
     qint64 period() { return mTimerPeriod;}
     void startStreamCmd();
@@ -53,20 +53,20 @@ public:
     void sendOsmoCmd(const QString cmd, const QString args);
 
 private:
-	int procCalibGyro();
-	int procCalibLevel();
+    int procCalibGyro();
+    int procCalibLevel();
     int procCalibAccel();
     int procArm();
     int procDisarm();
-	int procReboot();
+    int procReboot();
     int automode();
 
 public Q_SLOTS:
-    void onTimeout();
+            void onTimeout();
 
 private:
 
-	QMutex					mMutex;
+    QMutex					mMutex;
 
     CCModelAgent*           mAgent;
     CCModelComm*            mComm;
@@ -80,24 +80,24 @@ private:
     float                   mTargetZ;
     float                   mHead;
 
-	quint8					mLedType;
-	quint8					mLedSpeed;
-	quint8					mLedR;
-	quint8					mLedG;
-	quint8					mLedB;
-	quint8					mLedBright;
+    quint8					mLedType;
+    quint8					mLedSpeed;
+    quint8					mLedR;
+    quint8					mLedG;
+    quint8					mLedB;
+    quint8					mLedBright;
 
 
     bool                    mTakeOffReady;
     bool                    mLandReady;
-	bool					mGyroCalib;
+    bool					mGyroCalib;
     bool					mAccelCalib;
-	bool					mLevelCalib;
-	bool					mReboot;
+    bool					mLevelCalib;
+    bool					mReboot;
     bool                    mEmbeddedScenarioMode;
 
-	qint64                  mPrevTime;
-	qint64                  mTimerPeriod;
+    qint64                  mPrevTime;
+    qint64                  mTimerPeriod;
 
     // ros::NodeHandle         nh_bmodelcmdsender;
 };
