@@ -1,0 +1,1 @@
+python3 -m ThirdPart.mavlink.pymavlink.tools.mavgen --lang=C --wire-protocol=2.0 --output=./ThirdPart/Mavlink_v2.0 ./ThirdPart/mavlink/message_definitions/v1.0/common.xml

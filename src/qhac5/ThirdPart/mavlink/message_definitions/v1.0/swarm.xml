@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<mavlink>
+    <enums>
+        <enum name="SCENARIO_CMD_ENUM">
+            <description>Enumeration of distance sensor types</description>
+            <entry value="0" name="SCENARIO_CMD_SET_START_TIME">
+                <description>set start time for scenario  (param1: start_time)</description>
+            </entry>
+            <entry value="1" name="SCENARIO_CMD_STOP_SCENARIO">
+                <description>stop scenario</description>
+            </entry>
+            <entry value="2" name="SCENARIO_CMD_EMERGENCY_LAND">
+                <description>land</description>
+            </entry>
+            <entry value="3" name="SCENARIO_CMD_SET_CONFIGS">
+                <description>set vairous configurations param1: base vehicle pos x, param2: base vehicle pos y, param5: scenario file name</description>
+            </entry>
+            <entry value="4" name="SCENARIO_CMD_RESET_CONFIGS">
+                <description>reset configurations</description>
+            </entry>
+        </enum>
+    </enums>
+    <messages>
+        <message id="180" name="MONITORING">
+            <description>monitoring</description>
+            <field type="uint16_t" name="swarm_id">Swarm id for GCS</field>
+            <field type="uint32_t" name="tow">Time Of Week</field>
+            <field type="float" name="pos_x">current position x</field>
+            <field type="float" name="pos_y">current position y</field>
+            <field type="float" name="pos_z">current position z</field>
+            <field type="float" name="head">current heading</field>
+            <field type="float" name="roll">Roll</field>
+            <field type="float" name="pitch">Pitch</field>
+            <field type="uint32_t" name="status1">status #1</field>
+            <field type="uint32_t" name="status2">status #2 (RESERVED)</field>
+            <field type="uint8_t" name="rtk_nbase">the number of base satellite</field>
+            <field type="uint8_t" name="rtk_nrover">the number of rover satellite</field>
+            <field type="uint8_t" name="battery">Battery (%)</field>
+            <field type="uint8_t" name="r">red value (0~256)</field>
+            <field type="uint8_t" name="g">green value (0~256)</field>
+            <field type="uint8_t" name="b">blue value (0~256)</field>
+            <field type="float" name="rtk_n">Rtk Baseline North coordinate</field>
+            <field type="float" name="rtk_e">Rtk Baseline East coordinate</field>
+            <field type="float" name="rtk_d">Rtk Baseline Down coordinate</field>
+        </message>
+        <message id="181" name="SCENARIO_CMD">
+            <description>scenario_cmd</description>
+            <field type="float" name="param1">param1</field>
+            <field type="float" name="param2">param2</field>
+            <field type="float" name="param3">param3</field>
+            <field type="uint32_t" name="param4">param4</field>
+            <field type="uint8_t" name="target_system">target system id</field>
+            <field type="uint8_t" name="cmd">command</field>
+            <field type="uint8_t[32]" name="param5">param5</field>
+        </message>
+        <message id="182" name="LED_CONTROL">
+            <description>led_control</description>
+            <field type="uint8_t" name="type">display shape</field>
+            <field type="uint8_t" name="r">red value (0~256)</field>
+            <field type="uint8_t" name="g">green value (0~256)</field>
+            <field type="uint8_t" name="b">blue value (0~256)</field>
+            <field type="uint8_t" name="brightness">brightness</field>
+        </message>
+    </messages>
+</mavlink>
