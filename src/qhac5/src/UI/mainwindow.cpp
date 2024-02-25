@@ -16,7 +16,7 @@
 #include <QtMath>
 
 #include <opencv2/imgcodecs.hpp>
-#include <cv_bridge/cv_bridge.h>
+//#include <cv_bridge/cv_bridge.h>
 
 using std::placeholders::_1;
 
@@ -290,6 +290,7 @@ void MainWindow::procInitTreeWidget()
 
     strItemList << "MODE"
                 << "READY_TO_FLY_FROM_MONITORING"
+                << "Battery"
                 << "RTK_STATUS"
                 //				<< "RTK"
                 << "MONITORING_STATUS1_HEX"
@@ -458,12 +459,12 @@ void MainWindow::stopScenario()
 
 void MainWindow::loadConfigFile()
 {
-    QString fileName = "/home/user/recon/qhac3_recon/Docs/CMODEL_4EA_2.conf";
-//    QString fileName = QFileDialog::getOpenFileName(
-//                this,
-//                tr("Open Agent Configuration File"),
-//                QString(CONFIG_FILE_PATH),
-//                tr("Conf Files (*.conf)"));
+//    QString fileName = "/home/user/recon/qhac3_recon/Docs/CMODEL_4EA_2.conf";
+    QString fileName = QFileDialog::getOpenFileName(
+                this,
+                tr("Open Agent Configuration File"),
+                QString(CONFIG_FILE_PATH),
+                tr("Conf Files (*.conf)"));
 
 
     if ( !fileName.isEmpty() ) {

@@ -7,7 +7,7 @@ cmake_policy(SET CMP0072 NEW)
 
 project(qhac5)
 
-list(APPEND CMAKE_PREFIX_PATH "/opt/ros/foxy/")
+list(APPEND CMAKE_PREFIX_PATH "/opt/ros/humble/")
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(EnableC++XX)
