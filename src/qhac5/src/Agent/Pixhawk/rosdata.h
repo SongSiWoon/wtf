@@ -19,6 +19,8 @@
 #include <px4_msgs/msg/uavcan_parameter_request.hpp>
 #include <px4_msgs/msg/uavcan_parameter_value.hpp>
 #include <px4_msgs/msg/monitoring.hpp>
+#include <px4_msgs/msg/sensor_gps.hpp>
+#include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <px4_msgs/msg/log_message.hpp>
 //#include <agent_msg/srv/command.hpp>
 //#include <agent_msg/msg/agent_status.hpp>
@@ -113,6 +115,8 @@ public:
     void publishCommand(px4_msgs::msg::VehicleCommand command);
     void publishRequestParam(px4_msgs::msg::UavcanParameterRequest req);
     void updateMonitoring(const px4_msgs::msg::Monitoring::SharedPtr msg);
+    void updateVehicleGPSPosition(const px4_msgs::msg::SensorGps::SharedPtr msg);
+    void updateVehicleLocalPosition(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg);
     void updateLogMessage(const px4_msgs::msg::LogMessage::SharedPtr msg);
     void updateVehicleStatus(const px4_msgs::msg::VehicleStatus::SharedPtr msg);
     void updateVehicleCommandAck(const px4_msgs::msg::VehicleCommandAck::SharedPtr msg);
@@ -158,11 +162,11 @@ private:
     double                      mTargetLat, mTargetLng, mTargetAlt, mTargetYaw;
     double                      agentBaseAltDiff = 0;
 
-    QMap< QString, QVariant >           mParams;
+    QMap< QString, QVariant >                   mParams;
     px4_msgs::msg::VehicleStatus                mStatusRos;
     px4_msgs::msg::VehicleCommandAck            mVehicleCommandAck;
-//    px4_msgs::msg::VehicleLocalPosition         mVehicleLocalPosition;
-//    px4_msgs::msg::VehicleGlobalPosition        mVehicleGlobalPosition;
+    px4_msgs::msg::VehicleLocalPosition         mVehicleLocalPosition;
+    px4_msgs::msg::SensorGps                    mVehicleGPSPosition;
     px4_msgs::msg::Monitoring                   mMonitoringRos;
 //    agent_msg::msg::Osmo2Status                 mOsmo;
     QQueue<px4_msgs::msg::LogMessage>           mLogMessageQueue;
@@ -186,11 +190,11 @@ private:
 //    rclcpp::Subscription<px4_msgs::msg::SensorCombined>::SharedPtr mSensorCombinedSub_;
     rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr mVehicleStatusSub_;
     rclcpp::Subscription<px4_msgs::msg::VehicleCommandAck>::SharedPtr mVehicleCommandAckSub_;
-//    rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr mVehicleLocalPositionSub_;
+    rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr mVehicleLocalPositionSub_;
     rclcpp::Subscription<px4_msgs::msg::Monitoring>::SharedPtr mMonitoringSub_;
     rclcpp::Subscription<px4_msgs::msg::LogMessage>::SharedPtr mLogMessageSub_;
     rclcpp::Subscription<px4_msgs::msg::UavcanParameterValue>::SharedPtr mUavcanParameterValueSub_;
-//    rclcpp::Subscription<px4_msgs::msg::VehicleGlobalPosition>::SharedPtr mVehicleGlobalPositionSub_;
+    rclcpp::Subscription<px4_msgs::msg::SensorGps>::SharedPtr mVehicleGPSPositionSub_;
 //    rclcpp::Subscription<agent_msg::msg::Osmo2Status>::SharedPtr mOsmoSub_;
 
     rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr mCommandQHACPub_;
@@ -207,7 +211,7 @@ private:
     rclcpp::executors::SingleThreadedExecutor::SharedPtr mROS2Executor;
 
 
-    std::string                 ros2Header = "/agent";
+    std::string                 ros2Header = "/drone";
 
     double                     init_pos_x = 0, init_pos_y = 0;
 };

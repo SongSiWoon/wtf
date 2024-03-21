@@ -184,16 +184,19 @@ QVariant CROSData::data(const QString &aItem)
          return mMonitoringRos.tow*0.001f;
 	}
     else if (item == "GLOBAL_LAT") { //TODO: Monitoring LLA
-        return 0; //mMonitoringRos.lat;
+        return (double) mVehicleGPSPosition.lat * 1e-7;
     }
     else if (item == "GLOBAL_LON") {
-        return 0; //mMonitoringRos.lon;
+        return (double) mVehicleGPSPosition.lon * 1e-7;
     }
     else if (item == "GLOBAL_ALT") {
-        return 0; //mMonitoringRos.alt;
+        return (double) mVehicleGPSPosition.alt * 1e-3;
+    }
+    else if (item == "REF_LLH" ) {
+        return QVector3D((double)mVehicleLocalPosition.ref_lat, (double)mVehicleLocalPosition.ref_lon, (double)mVehicleLocalPosition.ref_alt);
     }
     else if (item == "LLH" ) {
-        return QVector3D(0.0, 0.0, 0.0); //QVector3D((double)mMonitoringRos.lat, (double)mMonitoringRos.lon, (double)mMonitoringRos.alt);
+        return QVector3D((double)mVehicleGPSPosition.lat * 1e-7, (double)mVehicleGPSPosition.lon * 1e-7, (double)mVehicleGPSPosition.alt * 1e-3);
     }
 	else if (item == "RTK_FIXED") {
          return monitoringFlag(mMonitoringRos.status1, RTKGPS_FIXED_MODE);
@@ -438,8 +441,8 @@ void CROSData::updateMonitoring(const px4_msgs::msg::Monitoring::SharedPtr msg)
     mRecvTime_Monitoring = QDateTime::currentMSecsSinceEpoch();
     mMonitoringRos.timestamp = msg->timestamp;
     mMonitoringRos.battery = msg->battery;
-    mMonitoringRos.pos_x = msg->pos_x + init_pos_y;
-    mMonitoringRos.pos_y = msg->pos_y + init_pos_x;
+    mMonitoringRos.pos_x = msg->pos_x;
+    mMonitoringRos.pos_y = msg->pos_y;
     mMonitoringRos.pos_z = msg->pos_z;
     mMonitoringRos.head = msg->head;
 //    mMonitoringRos.lat = msg->lat;
@@ -455,6 +458,22 @@ void CROSData::updateMonitoring(const px4_msgs::msg::Monitoring::SharedPtr msg)
         this->updateTarget(mMonitoringRos.pos_x, mMonitoringRos.pos_y, mMonitoringRos.pos_z, mTargetH);
     }
     mCommFlag = true;
+}
+
+void CROSData::updateVehicleGPSPosition(const px4_msgs::msg::SensorGps::SharedPtr msg)
+{
+    mVehicleGPSPosition.timestamp = msg->timestamp;
+    mVehicleGPSPosition.lat = msg->lat;
+    mVehicleGPSPosition.lon = msg->lon;
+    mVehicleGPSPosition.alt = msg->alt;
+}
+
+void CROSData::updateVehicleLocalPosition(const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg)
+{
+    mVehicleLocalPosition.timestamp = msg->timestamp;
+    mVehicleLocalPosition.ref_lat = msg->ref_lat;
+    mVehicleLocalPosition.ref_lon = msg->ref_lon;
+    mVehicleLocalPosition.ref_alt = msg->ref_alt;
 }
 
 void CROSData::updateVehicleStatus(const px4_msgs::msg::VehicleStatus::SharedPtr msg)
@@ -557,34 +576,44 @@ void CROSData::initSubscription()
     mQHAC3Node = rclcpp::Node::make_shared(("agent_" + std::to_string(mAgent->data("SYSID").toInt()) + "_qhac3_node"));
 
     /** For iris **/
-//    rclcpp::QoS qos = rclcpp::SystemDefaultsQoS();
-//    qos.reliable();
     rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
     auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, 5), qos_profile);
 
     // Subscribers++
-//    std::string topic_prefix = ros2Header + std::to_string(mAgent->data("SYSID").toInt());
-    std::string topic_prefix = "/fmu/out";
-    mVehicleStatusSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::VehicleStatus>(topic_prefix + "/vehicle_status", qos, std::bind(&CROSData::updateVehicleStatus, this, _1));
-    mMonitoringSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::Monitoring>(topic_prefix + "/monitoring", qos, std::bind(&CROSData::updateMonitoring, this, _1));
-    mVehicleCommandAckSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::VehicleCommandAck>(topic_prefix + "/vehicle_command_ack", qos, std::bind(&CROSData::updateVehicleCommandAck, this, _1));
-    mLogMessageSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::LogMessage>(topic_prefix + "/log_message", qos, std::bind(&CROSData::updateLogMessage, this, _1));
-    mUavcanParameterValueSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::UavcanParameterValue>(topic_prefix + "/uavcan_parameter_value", qos, std::bind(&CROSData::parameterValueCallback, this, _1));
-//    mOsmoSub_ = mQHAC3Node->create_subscription<agent_msg::msg::Osmo2Status>(topic_prefix + "/osmo2", qos, std::bind(&CROSData::osmoCallback, this, _1));
+    std::string topic_prefix_sub = ros2Header + std::to_string(mAgent->data("SYSID").toInt()) +"/fmu/out";
+
+    mVehicleStatusSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::VehicleStatus>(topic_prefix_sub + "/vehicle_status", qos, std::bind(&CROSData::updateVehicleStatus, this, _1));
+    mMonitoringSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::Monitoring>(topic_prefix_sub + "/monitoring", qos, std::bind(&CROSData::updateMonitoring, this, _1));
+    mVehicleGPSPositionSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::SensorGps>(topic_prefix_sub + "/vehicle_gps_position", qos, std::bind(&CROSData::updateVehicleGPSPosition, this, _1));
+//    mVehicleLocalPositionSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::VehicleLocalPosition>(topic_prefix_sub + "/vehicle_local_position", qos, std::bind(&CROSData::updateVehicleLocalPosition, this, _1));
+    mVehicleCommandAckSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::VehicleCommandAck>(topic_prefix_sub + "/vehicle_command_ack", qos, std::bind(&CROSData::updateVehicleCommandAck, this, _1));
+    mLogMessageSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::LogMessage>(topic_prefix_sub + "/log_message", qos, std::bind(&CROSData::updateLogMessage, this, _1));
+    mUavcanParameterValueSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::UavcanParameterValue>(topic_prefix_sub + "/uavcan_parameter_value", qos, std::bind(&CROSData::parameterValueCallback, this, _1));
+//    mOsmoSub_ = mQHAC3Node->create_subscription<agent_msg::msg::Osmo2Status>(topic_prefix_sub + "/osmo2", qos, std::bind(&CROSData::osmoCallback, this, _1));
 
 
     // Publishers
-    rclcpp::QoS qos_cmd = rclcpp::SystemDefaultsQoS();
-    qos_cmd.reliable();
-    std::string topic_prefix2 = "/fmu/in";
-    mCommandQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::VehicleCommand>(topic_prefix2 + "/vehicle_command", qos_cmd);
-    mUavcanParameterRequestQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::UavcanParameterRequest>(topic_prefix2 + "/uavcan_parameter_request", rclcpp::SystemDefaultsQoS());
+
+    rmw_qos_profile_t qos_cmd_profile = rmw_qos_profile_sensor_data;
+
+    qos_cmd_profile.history = RMW_QOS_POLICY_HISTORY_KEEP_LAST;
+    qos_cmd_profile.depth = 10;
+    qos_cmd_profile.reliability = RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT;
+    qos_cmd_profile.durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
+
+// `rclcpp::QoS` 객체 생성
+    auto qos_cmd = rclcpp::QoS(rclcpp::QoSInitialization(RMW_QOS_POLICY_HISTORY_KEEP_LAST, 10), qos_cmd_profile);
+
+    std::string topic_prefix_pub = ros2Header + std::to_string(mAgent->data("SYSID").toInt()) + "/fmu/in";
+
+    mCommandQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::VehicleCommand>(topic_prefix_pub + "/vehicle_command", qos_cmd);
+    mUavcanParameterRequestQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::UavcanParameterRequest>(topic_prefix_pub + "/uavcan_parameter_request", rclcpp::SystemDefaultsQoS());
 
     // Agent Manager
     mGstRunning = false;
-//    mAgentStatusSub_ = mQHAC3Node->create_subscription<agent_msg::msg::AgentStatus>(topic_prefix + "/agent_manager_status", qos, std::bind(&CROSData::agentManagerStatusCallback, this, _1));
-//    agent_manager_client = mQHAC3Node->create_client<agent_msg::srv::Command>(topic_prefix + "/agent_manager");
-//    agent_osmo_client = mQHAC3Node->create_client<agent_msg::srv::Command>(topic_prefix + "/control");
+//    mAgentStatusSub_ = mQHAC3Node->create_subscription<agent_msg::msg::AgentStatus>(topic_prefix_sub + "/agent_manager_status", qos, std::bind(&CROSData::agentManagerStatusCallback, this, _1));
+//    agent_manager_client = mQHAC3Node->create_client<agent_msg::srv::Command>(topic_prefix_sub + "/agent_manager");
+//    agent_osmo_client = mQHAC3Node->create_client<agent_msg::srv::Command>(topic_prefix_sub + "/control");
 
     init_pos_x = mAgent->info("init_pos_x").toDouble();
     init_pos_y = mAgent->info("init_pos_y").toDouble();
