@@ -38,7 +38,7 @@ private:
     void addHistory(QString text, int aId);
 
 private Q_SLOTS:
-    void onNodeClicked(int aId);
+//    void onNodeClicked(int aId);
     void onAllLand();
     void updateStatus();
     void updateTypeCombobox(QString aType);
@@ -96,7 +96,7 @@ private:
     QSignalMapper*      mSignalMapper;
     QTimer				mTimer;
     QMap<int, int>      mButtonIndexMap;       // <node id, button index>
-    int                 currentSelectedNode = 0;
+    QList<int>          selectNodeList;
     int                 mNumAgent;
     QQueue<int>         queueToFlight;
     int**               currentStatus;
