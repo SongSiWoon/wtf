@@ -9,6 +9,8 @@
 #include <QtCore/qmath.h>
 #include <cmath>
 #include <QVector2D>
+#include <QGeoCoordinate>
+#include <QVector3D>
 
 //#define _PI_        (3.14159265358979)
 #define R2D         (180.0/M_PI)
@@ -32,4 +34,6 @@ double ccw(QVector2D a, QVector2D b);
 double ccw(QVector2D p, QVector2D a, QVector2D b);
 bool sementIntersects(QVector2D a, QVector2D b, QVector2D c, QVector2D d);
 
+QVector3D LLH2NED(QGeoCoordinate pos, QGeoCoordinate refPos);
+QGeoCoordinate NED2LLH(QVector3D pos, QGeoCoordinate refPos);
 #endif // MYMATH_H

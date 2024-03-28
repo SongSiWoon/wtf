@@ -295,3 +295,26 @@ bool sementIntersects(QVector2D a, QVector2D b, QVector2D c, QVector2D d)
     return ab <= 0 && cd <=0;
 }
 
+QVector3D LLH2NED(QGeoCoordinate pos, QGeoCoordinate ref_pos)
+{
+    // Calc x,y,z of pos with ref_pos
+    double NED_X = ref_pos.distanceTo(QGeoCoordinate(pos.latitude(), ref_pos.longitude(), ref_pos.altitude()));
+    if (pos.latitude() < ref_pos.latitude())
+        NED_X = -NED_X;
+    double NED_Y = ref_pos.distanceTo(QGeoCoordinate(ref_pos.latitude(), pos.longitude(), ref_pos.altitude()));
+    if (pos.longitude() < ref_pos.longitude())
+        NED_Y = -NED_Y;
+    double NED_Z = -(pos.altitude() - ref_pos.altitude());
+    return QVector3D(NED_X, NED_Y, NED_Z);
+}
+
+QGeoCoordinate NED2LLH(QVector3D pos, QGeoCoordinate ref_pos)
+{
+    // Calc lat, lon, alt of pos with ref_pos
+    QGeoCoordinate LLHPosition = QGeoCoordinate(ref_pos.latitude(), ref_pos.longitude(), ref_pos.altitude());
+    // Move North/South
+    LLHPosition = LLHPosition.atDistanceAndAzimuth(pos.x(), 0, -pos.z());
+    // Move East/West
+    LLHPosition = LLHPosition.atDistanceAndAzimuth(pos.y(), 90);
+    return LLHPosition;
+}
