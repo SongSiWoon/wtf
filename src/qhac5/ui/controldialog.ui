@@ -69,7 +69,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="stop_pushButton">
+      <widget class="QPushButton" name="all_land">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -167,33 +167,33 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0" colspan="3">
-      <widget class="QLabel" name="selectedNodeLabel">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>100</height>
-        </size>
-       </property>
-       <property name="baseSize">
-        <size>
-         <width>0</width>
-         <height>100</height>
-        </size>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>20</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>[Drone is not Selected]</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
+<!--     <item row="0" column="0" colspan="3">-->
+<!--      <widget class="QLabel" name="selectedNodeLabel">-->
+<!--       <property name="minimumSize">-->
+<!--        <size>-->
+<!--         <width>0</width>-->
+<!--         <height>100</height>-->
+<!--        </size>-->
+<!--       </property>-->
+<!--       <property name="baseSize">-->
+<!--        <size>-->
+<!--         <width>0</width>-->
+<!--         <height>100</height>-->
+<!--        </size>-->
+<!--       </property>-->
+<!--       <property name="font">-->
+<!--        <font>-->
+<!--         <pointsize>20</pointsize>-->
+<!--        </font>-->
+<!--       </property>-->
+<!--       <property name="text">-->
+<!--        <string>[Drone is not Selected]</string>-->
+<!--       </property>-->
+<!--       <property name="alignment">-->
+<!--        <set>Qt::AlignCenter</set>-->
+<!--       </property>-->
+<!--      </widget>-->
+<!--     </item>-->
      <item row="2" column="2">
       <widget class="QLabel" name="label_2">
        <property name="text">
@@ -258,7 +258,7 @@
         <number>360</number>
        </property>
        <property name="value">
-        <number>270</number>
+        <number>0</number>
        </property>
       </widget>
      </item>
@@ -369,7 +369,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>stop_pushButton</sender>
+   <sender>all_land</sender>
    <signal>clicked()</signal>
    <receiver>CControlDialog</receiver>
    <slot>onAllLand()</slot>
