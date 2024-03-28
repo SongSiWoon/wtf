@@ -585,7 +585,7 @@ void CROSData::initSubscription()
     mVehicleStatusSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::VehicleStatus>(topic_prefix_sub + "/vehicle_status", qos, std::bind(&CROSData::updateVehicleStatus, this, _1));
     mMonitoringSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::Monitoring>(topic_prefix_sub + "/monitoring", qos, std::bind(&CROSData::updateMonitoring, this, _1));
     mVehicleGPSPositionSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::SensorGps>(topic_prefix_sub + "/vehicle_gps_position", qos, std::bind(&CROSData::updateVehicleGPSPosition, this, _1));
-//    mVehicleLocalPositionSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::VehicleLocalPosition>(topic_prefix_sub + "/vehicle_local_position", qos, std::bind(&CROSData::updateVehicleLocalPosition, this, _1));
+    mVehicleLocalPositionSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::VehicleLocalPosition>(topic_prefix_sub + "/vehicle_local_position", qos, std::bind(&CROSData::updateVehicleLocalPosition, this, _1));
     mVehicleCommandAckSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::VehicleCommandAck>(topic_prefix_sub + "/vehicle_command_ack", qos, std::bind(&CROSData::updateVehicleCommandAck, this, _1));
     mLogMessageSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::LogMessage>(topic_prefix_sub + "/log_message", qos, std::bind(&CROSData::updateLogMessage, this, _1));
     mUavcanParameterValueSub_ = mQHAC3Node->create_subscription<px4_msgs::msg::UavcanParameterValue>(topic_prefix_sub + "/uavcan_parameter_value", qos, std::bind(&CROSData::parameterValueCallback, this, _1));
