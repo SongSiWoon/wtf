@@ -169,7 +169,7 @@ private:
     px4_msgs::msg::SensorGps                    mVehicleGPSPosition;
     px4_msgs::msg::Monitoring                   mMonitoringRos;
 //    agent_msg::msg::Osmo2Status                 mOsmo;
-    QQueue<px4_msgs::msg::LogMessage>           mLogMessageQueue;
+    QQueue<QString>                             mLogMessageQueue;
 //    QGeoCoordinate                              base_coordinate = QGeoCoordinate(0,0,0);
     bool    mGstRunning;
 //    px4_msgs::msg::LogMessage                   mLogMessage;

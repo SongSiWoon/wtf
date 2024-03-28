@@ -148,8 +148,7 @@ QVariant CROSData::data(const QString &aItem)
 	else if ( item == "STATUSTEXT") {
         if (!mLogMessageQueue.isEmpty()){
             auto tmpLogMessage = mLogMessageQueue.dequeue();
-            std::string statustext(tmpLogMessage.text.begin(), tmpLogMessage.text.end());
-            return statustext.c_str();
+            return tmpLogMessage;
         }else{
             return "";
         }
@@ -498,8 +497,38 @@ void CROSData::updateLogMessage(const px4_msgs::msg::LogMessage::SharedPtr msg)
     newLogMessage.timestamp = msg->timestamp;
     newLogMessage.severity = msg->severity;
     newLogMessage.text = msg->text;
+    std::string text(msg->text.begin(), std::find(msg->text.begin(), msg->text.end(), '\0'));
+    QString formattedMessage;
+    switch(msg->severity) {
+        case 0:
+            formattedMessage = QString("[EMERGENCY] %1").arg(QString::fromStdString(text));
+            break;
+        case 1:
+            formattedMessage = QString("[ALERT] %1").arg(QString::fromStdString(text));
+            break;
+        case 2:
+            formattedMessage = QString("[CRITICAL] %1").arg(QString::fromStdString(text));
+            break;
+        case 3:
+            formattedMessage = QString("[ERROR] %1").arg(QString::fromStdString(text));
+            break;
+        case 4:
+            formattedMessage = QString("[WARNING] %1").arg(QString::fromStdString(text));
+            break;
+        case 5:
+            formattedMessage = QString("[NOTICE] %1").arg(QString::fromStdString(text));
+            break;
+        case 6:
+            formattedMessage = QString("[INFO] %1").arg(QString::fromStdString(text));
+            break;
+        case 7:
+            formattedMessage = QString("[DEBUG] %1").arg(QString::fromStdString(text));
+            break;
+        default:
+            formattedMessage = QString("[INFO] %1").arg(QString::fromStdString(text));
+    }
 
-    mLogMessageQueue.enqueue(newLogMessage);
+    mLogMessageQueue.enqueue(formattedMessage);
 }
 
 
