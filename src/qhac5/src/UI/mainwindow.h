@@ -66,6 +66,9 @@ public:
     bool                    processImage;
     QLabel                  *mImageLabel, *mInformationLabel, *mMapSelectionLabel;
     QGeoCoordinate getNewPositionDiff(QGeoCoordinate oldPosition, double x, double y, double z);
+
+    QGeoCoordinate calculateCenter(const QMap<int, IAgent *> &agentsMap);
+
 //    static const QGeoCoordinate   refPos;
     static QVector3D LLH2NED(QGeoCoordinate pos);
     static QGeoCoordinate NED2LLH(QVector3D pos);
@@ -83,6 +86,7 @@ private:
     void updateDronesInMap();
     void updateStatusText();
     void updateNotifier();
+    void recenterMap();
 
 private:    // ROS2 Topic
     rclcpp::Node::SharedPtr _ros2node;
@@ -95,7 +99,7 @@ private:    // ROS2 Topic
 
 
 private Q_SLOTS:
-            void updateUI();
+    void updateUI();
     void runScenario();
     void stopScenario();
     void loadConfigFile();
@@ -156,6 +160,8 @@ private:
     float                   HEADING = 270;
     float                   TARGET_Z = 3;
     float                   DEPLOY_MINIMUM_DIST = 5.0;      // in meter
+
+    bool                    keyEventEnabled = false;
 };
 
 //MainWindow::refPos = QGeoCoordinate(REF_LAT, REF_LON, REF_ALT);

@@ -54,6 +54,16 @@ MainWindow::MainWindow(QWidget *parent) :
 //    ui->mapView->moveByGPS(36.37501576001398, 127.35263774974969, 19);
     ui->mapView->moveByGPS(36.4537, 127.406, 19);
 
+    QPushButton *recenterButton = new QPushButton("Recenter Map", this);
+    ui->mainToolBar->addWidget(recenterButton);
+    connect(recenterButton, &QPushButton::clicked, this, &MainWindow::recenterMap);
+
+    QPushButton *actionToggleKeyEvents = new QPushButton("Keyboard: Off", this);
+    ui->mainToolBar->addWidget(actionToggleKeyEvents);
+    connect(actionToggleKeyEvents, &QPushButton::clicked, [this, actionToggleKeyEvents]() {
+        this->keyEventEnabled = !this->keyEventEnabled;
+        actionToggleKeyEvents->setText(this->keyEventEnabled ? "Keyboard: On" : "Keyboard: Off");
+    });
 
     mMapView = ui->mapView;
     mRubberBand = NULL;
@@ -400,14 +410,35 @@ void MainWindow::updateStatusText()
         int id = agentsIterator.value()->id();
         QString text = mManager->agent(id)->data("STATUSTEXT").toString();
 
-        if ( !text.isEmpty() &&  text != mPrevStatusText[id] ) {
-            QString statusText = QString("[%1] %2")
-                    .arg(id)
-                    .arg(text);
+        QString severity;
+        QRegularExpression regExp("\\[(.*?)\\]");
 
-            ui->statusListWidget->addItem(statusText);
+        auto match = regExp.match(text);
+        if (match.hasMatch()) {
+            severity = match.captured(1);
+        }
+
+        if ( !text.isEmpty() &&  text != mPrevStatusText[id] ) {
+            QListWidgetItem *item = new QListWidgetItem(QString("[%1] %2").arg(id).arg(text));
+
+            QColor color;
+            if (severity == "EMERGENCY" || severity == "ALERT" || severity == "CRITICAL" || severity == "ERROR") {
+                color = QColor("red");
+            } else if (severity == "WARNING") {
+                color = QColor("orange");
+            } else if (severity == "NOTICE" || severity == "INFO") {
+                color = QColor("black");
+            } else if (severity == "DEBUG") {
+                color = QColor("gray");
+            } else {
+                color = QColor("black");
+            }
+
+            item->setForeground(QBrush(color));
+
+            ui->statusListWidget->addItem(item);
             ui->statusListWidget->scrollToBottom();
-            mPrevStatusText[id] = mManager->agent(id)->data("STATUSTEXT").toString();
+            mPrevStatusText[id] = text;
         }
     }
 }
@@ -638,8 +669,43 @@ QGeoCoordinate MainWindow::NED2LLH(QVector3D pos)
     return LLHPosition;
 }
 
+QGeoCoordinate MainWindow::calculateCenter(const QMap<int, IAgent*>& agents) {
+    double sumLat = 0.0, sumLon = 0.0;
+    int count = 0;
+
+    for (auto agent : agents) {
+        if (agent) {
+            QVector3D llh = agent->data("LLH").value<QVector3D>();
+            double lat = llh.x();
+            double lon = llh.y();
+
+            if (lat >= -90.0 && lat <= 90.0 && lon >= -180.0 && lon <= 180.0) {
+                sumLat += lat;
+                sumLon += lon;
+                ++count;
+            }
+        }
+    }
+
+    if (count > 0) {
+        return QGeoCoordinate(sumLat / count, sumLon / count);
+    } else {
+        return QGeoCoordinate();
+    }
+}
+
+void MainWindow::recenterMap() {
+    QMap<int, IAgent*> agentsMap = mManager->agents();
+    if (agentsMap.isEmpty()) return;
+
+    QGeoCoordinate center = calculateCenter(agentsMap);
+
+    mMapView->moveByGPS(center.latitude(), center.longitude(), 19);
+}
+
 void MainWindow::keyEvent(QKeyEvent *event)
 {
+    if (!keyEventEnabled) return;
 
     // find first agent
     int node = -1;
