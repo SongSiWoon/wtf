@@ -9,6 +9,7 @@
 #include <QMap>
 #include <QQueue>
 #include <QComboBox>
+#include "mymath.h"
 
 class CManager;
 

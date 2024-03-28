@@ -134,7 +134,6 @@ void CControlDialog::initNodeLayout()
 
     // create agent button
     for (agentsIterator = agentsMap.begin(); agentsIterator != agentsMap.end(); ++agentsIterator){
-//    foreach (IAgent* agent, agentsMap) {
         int id = agentsIterator.value()->id();
         int sysid = agentsIterator.value()->data("SYSID").toInt();
 
@@ -206,8 +205,8 @@ void CControlDialog::onAllLand()
 
 void CControlDialog::updateStatus()
 {
-    QString normalStyle = "font-size:30px;font:bold;";
-    QString readyToFlyStyle = "font-size: 30px;font: bold;background-color:rgb(0,150,0);";
+    QString normalStyle = "font-size:17px;font:bold;";
+    QString readyToFlyStyle = "font-size:17px;font: bold;";
     QString emergencyStyle = normalStyle + QString("background-color: rgb(200,0,0);");
 
     QMap<int, IAgent*> agentsMap = mManager->agents();
@@ -249,11 +248,14 @@ void CControlDialog::updateStatus()
         double curLat = mManager->agent(currentSelectedNode)->data("GLOBAL_LAT").toDouble();
         double curLon = mManager->agent(currentSelectedNode)->data("GLOBAL_LON").toDouble();
         double curAlt = mManager->agent(currentSelectedNode)->data("GLOBAL_ALT").toDouble();
+        QVector3D curPosQVector = mManager->agent(currentSelectedNode)->data("POS").value<QVector3D>();
+        QVector3D refLLH = mManager->agent(currentSelectedNode)->data("REF_LLH").value<QVector3D>();
+
         QGeoCoordinate curQGeo(curLat, curLon, curAlt);
-        QVector3D curPosQVector = MainWindow::LLH2NED(curQGeo);
-        QString curPosText = QString("LocalPos : %1, %2, %3\nGlobalPos : %4, %5, %6")
-                                 .arg(curPosQVector.x()).arg(curPosQVector.y()).arg(curPosQVector.z())
-                                 .arg(curLat).arg(curLon).arg(curAlt);
+        QString curPosText = QString("LocalPos : %1, %2, %3\nGlobalPos : %4, %5, %6\nREF_LLH : %7, %8, %9")
+                .arg(curPosQVector.x()).arg(curPosQVector.y()).arg(curPosQVector.z())
+                .arg(curLat).arg(curLon).arg(curAlt)
+                .arg(refLLH.x()).arg(refLLH.y()).arg(refLLH.z());
         ui->curPosLabel->setText(curPosText);
     } else {
         ui->curPosLabel->setText("");
@@ -424,13 +426,24 @@ void CControlDialog::on_minusYButton_clicked()
         double curLat = mManager->agent(currentSelectedNode)->data("GLOBAL_LAT").toDouble();
         double curLon = mManager->agent(currentSelectedNode)->data("GLOBAL_LON").toDouble();
         double curAlt = mManager->agent(currentSelectedNode)->data("GLOBAL_ALT").toDouble();
+        QVector3D refLLH = mManager->agent(currentSelectedNode)->data("REF_LLH").value<QVector3D>();
+
+
         QGeoCoordinate curQGeo(curLat, curLon, curAlt);
-        QVector3D newPosQVector = MainWindow::LLH2NED(curQGeo);
+        QGeoCoordinate refQGeo(refLLH.x(),refLLH.y(),refLLH.z());
+
+        QVector3D newPosQVector = LLH2NED(curQGeo, refQGeo);
         newPosQVector.setY(newPosQVector.y() - ui->controlSpinBox->value());
-        QGeoCoordinate newPositionGeo = MainWindow::NED2LLH(newPosQVector);
-        mManager->agent(currentSelectedNode)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
-                                                  newPositionGeo.altitude(), ui->headingSpinBox->value());
-        addHistory(QString("MOVE -y %1(m)").arg(ui->controlSpinBox->value()), currentSelectedNode);
+
+        QGeoCoordinate newPositionGeo = NED2LLH(newPosQVector, refQGeo);
+
+        if (newPositionGeo.isValid()) {
+            mManager->agent(currentSelectedNode)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
+                                                      newPositionGeo.altitude(), ui->headingSpinBox->value());
+            addHistory(QString("MOVE -y %1(m)").arg(ui->controlSpinBox->value()), currentSelectedNode);
+        } else {
+            addHistory(QString("Failed to move: Invalid newPositionGeo coordinates"),currentSelectedNode);
+        }
     }
 }
 
@@ -443,13 +456,22 @@ void CControlDialog::on_plusYButton_clicked()
         double curLat = mManager->agent(currentSelectedNode)->data("GLOBAL_LAT").toDouble();
         double curLon = mManager->agent(currentSelectedNode)->data("GLOBAL_LON").toDouble();
         double curAlt = mManager->agent(currentSelectedNode)->data("GLOBAL_ALT").toDouble();
+        QVector3D refLLH = mManager->agent(currentSelectedNode)->data("REF_LLH").value<QVector3D>();
+
         QGeoCoordinate curQGeo(curLat, curLon, curAlt);
-        QVector3D newPosQVector = MainWindow::LLH2NED(curQGeo);
+        QGeoCoordinate refQGeo(refLLH.x(),refLLH.y(),refLLH.z());
+
+        QVector3D newPosQVector = LLH2NED(curQGeo, refQGeo);
         newPosQVector.setY(newPosQVector.y() + ui->controlSpinBox->value());
-        QGeoCoordinate newPositionGeo = MainWindow::NED2LLH(newPosQVector);
-        mManager->agent(currentSelectedNode)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
-                                                  newPositionGeo.altitude(), ui->headingSpinBox->value());
-        addHistory(QString("MOVE +y %1(m)").arg(ui->controlSpinBox->value()), currentSelectedNode);
+        QGeoCoordinate newPositionGeo = NED2LLH(newPosQVector, refQGeo);
+
+        if (newPositionGeo.isValid()) {
+            mManager->agent(currentSelectedNode)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
+                                                      newPositionGeo.altitude(), ui->headingSpinBox->value());
+            addHistory(QString("MOVE +y %1(m)").arg(ui->controlSpinBox->value()), currentSelectedNode);
+        } else {
+            addHistory(QString("Failed to move: Invalid newPositionGeo coordinates"),currentSelectedNode);
+        }
     }
 }
 
@@ -462,13 +484,22 @@ void CControlDialog::on_minusXButton_clicked()
         double curLat = mManager->agent(currentSelectedNode)->data("GLOBAL_LAT").toDouble();
         double curLon = mManager->agent(currentSelectedNode)->data("GLOBAL_LON").toDouble();
         double curAlt = mManager->agent(currentSelectedNode)->data("GLOBAL_ALT").toDouble();
+        QVector3D refLLH = mManager->agent(currentSelectedNode)->data("REF_LLH").value<QVector3D>();
+
         QGeoCoordinate curQGeo(curLat, curLon, curAlt);
-        QVector3D newPosQVector = MainWindow::LLH2NED(curQGeo);
+        QGeoCoordinate refQGeo(refLLH.x(),refLLH.y(),refLLH.z());
+
+        QVector3D newPosQVector = LLH2NED(curQGeo, refQGeo);
         newPosQVector.setX(newPosQVector.x() - ui->controlSpinBox->value());
-        QGeoCoordinate newPositionGeo = MainWindow::NED2LLH(newPosQVector);
-        mManager->agent(currentSelectedNode)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
-                                                  newPositionGeo.altitude(), ui->headingSpinBox->value());
-        addHistory(QString("MOVE -x %1(m)").arg(ui->controlSpinBox->value()), currentSelectedNode);
+        QGeoCoordinate newPositionGeo = NED2LLH(newPosQVector, refQGeo);
+
+        if (newPositionGeo.isValid()) {
+            mManager->agent(currentSelectedNode)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
+                                                      newPositionGeo.altitude(), ui->headingSpinBox->value());
+            addHistory(QString("MOVE -x %1(m)").arg(ui->controlSpinBox->value()), currentSelectedNode);
+        } else {
+            addHistory(QString("Failed to move: Invalid newPositionGeo coordinates"),currentSelectedNode);
+        }
     }
 }
 
@@ -481,13 +512,22 @@ void CControlDialog::on_plusXButton_clicked()
         double curLat = mManager->agent(currentSelectedNode)->data("GLOBAL_LAT").toDouble();
         double curLon = mManager->agent(currentSelectedNode)->data("GLOBAL_LON").toDouble();
         double curAlt = mManager->agent(currentSelectedNode)->data("GLOBAL_ALT").toDouble();
+        QVector3D refLLH = mManager->agent(currentSelectedNode)->data("REF_LLH").value<QVector3D>();
+
         QGeoCoordinate curQGeo(curLat, curLon, curAlt);
-        QVector3D newPosQVector = MainWindow::LLH2NED(curQGeo);
+        QGeoCoordinate refQGeo(refLLH.x(),refLLH.y(),refLLH.z());
+
+        QVector3D newPosQVector = LLH2NED(curQGeo, refQGeo);
         newPosQVector.setX(newPosQVector.x() + ui->controlSpinBox->value());
-        QGeoCoordinate newPositionGeo = MainWindow::NED2LLH(newPosQVector);
-        mManager->agent(currentSelectedNode)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
-                                                  newPositionGeo.altitude(), ui->headingSpinBox->value());
-        addHistory(QString("MOVE +x %1(m)").arg(ui->controlSpinBox->value()), currentSelectedNode);
+        QGeoCoordinate newPositionGeo = NED2LLH(newPosQVector, refQGeo);
+
+        if (newPositionGeo.isValid()) {
+            mManager->agent(currentSelectedNode)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
+                                                      newPositionGeo.altitude(), ui->headingSpinBox->value());
+            addHistory(QString("MOVE +x %1(m)").arg(ui->controlSpinBox->value()), currentSelectedNode);
+        } else {
+            addHistory(QString("Failed to move: Invalid newPositionGeo coordinates"),currentSelectedNode);
+        }
     }
 }
 
@@ -498,11 +538,20 @@ void CControlDialog::on_pushButton_clicked()
         qDebug() << "Select Drone First!";
     } else {
         QVector3D newPosQVector = QVector3D(ui->movetoX->value(), ui->movetoY->value(), ui->movetoZ->value());
-        QGeoCoordinate newPositionGeo = MainWindow::NED2LLH(newPosQVector);
-        mManager->agent(currentSelectedNode)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
-                                                  newPositionGeo.altitude(), ui->headingSpinBox->value());
-        addHistory(QString("MOVE to %1, %2, %3").arg(newPosQVector.x()).arg(newPosQVector.y()).arg(newPosQVector.z()),
-                   currentSelectedNode);
+        QVector3D refLLH = mManager->agent(currentSelectedNode)->data("REF_LLH").value<QVector3D>();
+
+        QGeoCoordinate refQGeo(refLLH.x(),refLLH.y(),refLLH.z());
+
+        QGeoCoordinate newPositionGeo = NED2LLH(newPosQVector, refQGeo);
+
+        if (newPositionGeo.isValid()) {
+            mManager->agent(currentSelectedNode)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
+                                                      newPositionGeo.altitude(), ui->headingSpinBox->value());
+            addHistory(QString("MOVE to %1, %2, %3").arg(newPosQVector.x()).arg(newPosQVector.y()).arg(newPosQVector.z()),
+                       currentSelectedNode);
+        } else {
+            addHistory(QString("Failed to move: Invalid newPositionGeo coordinates"),currentSelectedNode);
+        }
     }
 }
 
