@@ -43,6 +43,8 @@ private Q_SLOTS:
     void updateStatus();
     void updateTypeCombobox(QString aType);
 
+    void on_rebootButton_clicked();
+
     void on_armButton_clicked();
 
     void on_takeoffButton_clicked();

@@ -49,7 +49,7 @@ void CControlDialog::initNodeLayout() {
 
     // set combobox list
     QStringList comboboxItemList;
-    comboboxItemList << "ARM" << "TAKEOFF" << "MOVE" << "LANDING" << "DISARM";
+    comboboxItemList << "REBOOT" << "ARM" << "TAKEOFF" << "MOVE" << "LANDING" << "DISARM";
 
     int i = 0;
     QMap < int, IAgent * > agentsMap = mManager->agents();
@@ -356,6 +356,19 @@ void CControlDialog::addHistory(QString text, int aId) {
             .arg(text);
     ui->controlHistoryWidget->addItem(controlText);
     ui->controlHistoryWidget->scrollToBottom();
+}
+
+void CControlDialog::on_rebootButton_clicked()
+{
+    if (selectNodeList.isEmpty()) {
+        qDebug() << "Select Drone(s) First!";
+        return;
+    }
+
+    for (int nodeId: selectNodeList) {
+        mManager->agent(nodeId)->cmd("REBOOT");
+        addHistory(QString("REBOOT %1").arg(nodeId), nodeId);
+    }
 }
 
 void CControlDialog::on_armButton_clicked() {
