@@ -1,6 +1,6 @@
 [submodule "src/px4_msgs"]
 	path = src/px4_msgs
-	url = https://github.com/SongSiWoon/px4_msgs.git
+	url = https://github.com/SUV-Lab/px4_msgs.git
 	branch = v1.14/humble
 [submodule "src/QHAC5/ThirdPart/mavlink"]
 	path = src/QHAC5/ThirdPart/mavlink
