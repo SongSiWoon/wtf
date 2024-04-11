@@ -105,10 +105,8 @@ int CCModelAgent::cmd(const char *aCmd, QVariant aArg1, QVariant aArg2, QVariant
         mSender->setpoint(sp.x(), sp.y(), sp.z(), aArg2.toDouble());
     }
     else if (item == "TAKEOFF" ) {
-        double lat = data("GLOBAL_LAT").toDouble();
-        double lon = data("GLOBAL_LON").toDouble();
         double alt = data("GLOBAL_ALT").toDouble();
-        mSender->takeoff(lat, lon, alt + aArg1.toDouble(), aArg2.toDouble());
+        mSender->takeoff(alt + aArg1.toDouble());
     }
     else if (item == "LANDING" ) {
         mSender->landing();

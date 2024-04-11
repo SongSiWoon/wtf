@@ -69,18 +69,18 @@ void CCModelCmdSender::unlock()
     // mAgent->dataROS()->publishCommand(unlock_cmd);
 }
 
-void CCModelCmdSender::takeoff(double lat, double lng, double altitude, double yaw)
+void CCModelCmdSender::takeoff(double altitude)
 {
 //    printf("takeoff to lat: %.5lf, lng: %.5lf, altitude: %.2lf, yaw: %.3lf", lat,lng,altitude,yaw);
     auto takeoff_cmd = px4_msgs::msg::VehicleCommand();
     takeoff_cmd.target_system = mAgent->sysID();
     takeoff_cmd.command = MAV_CMD_NAV_TAKEOFF;
-    takeoff_cmd.param1 = -1.0;
-    takeoff_cmd.param2 = 0.0;
-    takeoff_cmd.param3 = 0.0;
-    takeoff_cmd.param4 = yaw * DEG2RAD;
-    takeoff_cmd.param5 = lat;
-    takeoff_cmd.param6 = lng;
+    takeoff_cmd.param1 = NAN;
+    takeoff_cmd.param2 = NAN;
+    takeoff_cmd.param3 = NAN;
+    takeoff_cmd.param4 = NAN;
+    takeoff_cmd.param5 = NAN;
+    takeoff_cmd.param6 = NAN;
     takeoff_cmd.param7 = altitude;
     takeoff_cmd.confirmation = false;
     takeoff_cmd.from_external = true;

@@ -32,10 +32,10 @@ public:
     void disarm();
     void lock();
     void unlock();
-    void takeoff(double lat, double lng, double yaw, double altitude);
+    void takeoff(double altitude);
     void landing();
-    void reposition(double lat, double lng, double yaw, double altitude);
     int reboot();
+    void reposition(double lat, double lng, double altitude, double yaw);
     int resetLpos(double lat, double lon, double alt);
     int offboard();
     int automission();

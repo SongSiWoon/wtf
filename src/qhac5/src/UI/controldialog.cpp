@@ -429,7 +429,7 @@ void CControlDialog::on_takeoffButton_clicked() {
 
     for (int nodeId: selectNodeList) {
         int headingSetpoint = ui->headingSpinBox->value();
-        mManager->agent(nodeId)->cmd("TAKEOFF", 3.0, headingSetpoint);
+        mManager->agent(nodeId)->cmd("TAKEOFF", 3.0);
         addHistory("TAKE-OFF", nodeId);
     }
 }
