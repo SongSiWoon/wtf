@@ -22,6 +22,8 @@
 #include <px4_msgs/msg/sensor_gps.hpp>
 #include <px4_msgs/msg/vehicle_local_position.hpp>
 #include <px4_msgs/msg/log_message.hpp>
+#include <px4_msgs/msg/offboard_control_mode.hpp>
+#include <px4_msgs/msg/trajectory_setpoint.hpp>
 //#include <agent_msg/srv/command.hpp>
 //#include <agent_msg/msg/agent_status.hpp>
 //#include <agent_msg/msg/osmo2_status.hpp>
@@ -113,6 +115,8 @@ public:
     void updateTarget(float x, float y, float z, float H);
     void updateTargetGlobal(double lat, double lng, double altitude, double yaw);
     void publishCommand(px4_msgs::msg::VehicleCommand command);
+    void publishOffboardControlMode(px4_msgs::msg::OffboardControlMode command);
+    void publishTrajectroySetpoint(px4_msgs::msg::TrajectorySetpoint setpoint);
     void publishRequestParam(px4_msgs::msg::UavcanParameterRequest req);
     void updateMonitoring(const px4_msgs::msg::Monitoring::SharedPtr msg);
     void updateVehicleGPSPosition(const px4_msgs::msg::SensorGps::SharedPtr msg);
@@ -198,6 +202,8 @@ private:
 //    rclcpp::Subscription<agent_msg::msg::Osmo2Status>::SharedPtr mOsmoSub_;
 
     rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr mCommandQHACPub_;
+    rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr mOffboardCommandModeQHACPub_;
+    rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr mTrajectorySetpointQHACPub_;
     rclcpp::Publisher<px4_msgs::msg::UavcanParameterRequest>::SharedPtr mUavcanParameterRequestQHACPub_;
 //    rclcpp::Publisher<px4_msgs::msg::OffboardSetpoint>::SharedPtr mOffboardSetpointQHACPub_;
 //    rclcpp::Publisher<px4_msgs::msg::VehicleLocalPositionSetpoint>::SharedPtr mVehicleLocalPositionSetpointQHACPub_;

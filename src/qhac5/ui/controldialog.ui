@@ -50,6 +50,11 @@
        </item>
        <item>
         <property name="text">
+         <string>Offboard</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
          <string>Emergency</string>
         </property>
        </item>
@@ -139,13 +144,27 @@
        </property>
       </widget>
      </item>
-    <item row="0" column="3">
+     <item row="0" column="2">
+        <widget class="QPushButton" name="resetLposButton">
+           <property name="text">
+            <string>ResetLPOS</string>
+           </property>
+        </widget>
+     </item>
+     <item row="0" column="3">
         <widget class="QPushButton" name="rebootButton">
             <property name="text">
                 <string>Reboot</string>
             </property>
         </widget>
-    </item>
+     </item>
+     <item row="0" column="0">
+        <widget class="QPushButton" name="offboardButton">
+          <property name="text">
+            <string>Offboard-Mode</string>
+          </property>
+        </widget>
+     </item>
      <item row="3" column="0">
       <widget class="QPushButton" name="armButton">
        <property name="text">

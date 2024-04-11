@@ -43,7 +43,11 @@ private Q_SLOTS:
     void updateStatus();
     void updateTypeCombobox(QString aType);
 
+    void on_resetLposButton_clicked();
+
     void on_rebootButton_clicked();
+
+    void on_offboardButton_clicked();
 
     void on_armButton_clicked();
 
@@ -67,11 +71,13 @@ private Q_SLOTS:
 
     void on_pushButton_clicked();
 
+    void CControlDialog::sendOCMInterval();
 private:
     void showEvent(QShowEvent *event);
     void closeEvent(QCloseEvent *event);
     void hideEvent(QHideEvent *event);
 
+    void sendCommand(int nodeId, QVector3D controlValue, double heading);
 private:
     Ui::CControlDialog *ui;
 
@@ -97,6 +103,7 @@ private:
     QLabel*             mSelectedNodeLabel;
     QSignalMapper*      mSignalMapper;
     QTimer				mTimer;
+    QTimer*				ocmTimer;
     QMap<int, int>      mButtonIndexMap;       // <node id, button index>
     QList<int>          selectNodeList;
     int                 mNumAgent;

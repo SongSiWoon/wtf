@@ -22,8 +22,12 @@ CControlDialog::CControlDialog(CManager *aManager, QWidget *parent) :
     connect(&mTimer, SIGNAL(timeout()), this, SLOT(updateStatus()));
     mTimer.setInterval(1000);
 
+    ocmTimer = new QTimer(this);
+    connect(ocmTimer, &QTimer::timeout, this, &CControlDialog::sendOCMInterval);
+
     connect(ui->type_comboBox, SIGNAL(currentTextChanged(QString)),
             this, SLOT(updateTypeCombobox(QString)));
+    ui->offboardButton->hide();
 }
 
 CControlDialog::~CControlDialog() {
@@ -49,7 +53,7 @@ void CControlDialog::initNodeLayout() {
 
     // set combobox list
     QStringList comboboxItemList;
-    comboboxItemList << "REBOOT" << "ARM" << "TAKEOFF" << "MOVE" << "LANDING" << "DISARM";
+    comboboxItemList << "REBOOT" << "OFFBOARD" << "ARM" << "TAKEOFF" << "MOVE" << "LANDING" << "DISARM";
 
     int i = 0;
     QMap < int, IAgent * > agentsMap = mManager->agents();
@@ -321,11 +325,13 @@ float CControlDialog::targetXYDistance(int mAgentId) {
 }
 
 void CControlDialog::updateTypeCombobox(QString aType) {
-//    int numAgent = mManager->numOfAgent();
-//    if (aType == "Emergency")
-//        ui->controlGridLayout->widget()->hide();
-//    else
-//        ui->controlGridLayout->widget()->show();
+    if (aType == "Offboard") {
+        ui->offboardButton->show();
+        ocmTimer->start(400);
+    } else {
+        ui->offboardButton->hide();
+        ocmTimer->stop();
+    }
 }
 
 void CControlDialog::showEvent(QShowEvent *event) {
@@ -358,6 +364,19 @@ void CControlDialog::addHistory(QString text, int aId) {
     ui->controlHistoryWidget->scrollToBottom();
 }
 
+void CControlDialog::on_resetLposButton_clicked()
+{
+    if (selectNodeList.isEmpty()) {
+        qDebug() << "Select Drone(s) First!";
+        return;
+    }
+
+    for (int nodeId: selectNodeList) {
+        mManager->agent(nodeId)->cmd("RESET_LPOS");
+        addHistory(QString("RESET_LPOS %1").arg(nodeId), nodeId);
+    }
+}
+
 void CControlDialog::on_rebootButton_clicked()
 {
     if (selectNodeList.isEmpty()) {
@@ -368,6 +387,23 @@ void CControlDialog::on_rebootButton_clicked()
     for (int nodeId: selectNodeList) {
         mManager->agent(nodeId)->cmd("REBOOT");
         addHistory(QString("REBOOT %1").arg(nodeId), nodeId);
+    }
+}
+
+void CControlDialog::on_offboardButton_clicked()
+{
+    if (selectNodeList.isEmpty()) {
+        qDebug() << "Select Drone(s) First!";
+        return;
+    }
+
+    for (int nodeId: selectNodeList) {
+        double heading = mManager->agent(nodeId)->data("HEADING").toDouble();
+
+        sendCommand(nodeId, QVector3D(0.0, 0.0, 0.0), heading);
+
+        mManager->agent(nodeId)->cmd("OFFBOARD");
+        addHistory(QString("OFFBOARD %1").arg(nodeId), nodeId);
     }
 }
 
@@ -393,7 +429,7 @@ void CControlDialog::on_takeoffButton_clicked() {
 
     for (int nodeId: selectNodeList) {
         int headingSetpoint = ui->headingSpinBox->value();
-        mManager->agent(nodeId)->cmd("TAKEOFF", 3, headingSetpoint);
+        mManager->agent(nodeId)->cmd("TAKEOFF", 3.0, headingSetpoint);
         addHistory("TAKE-OFF", nodeId);
     }
 }
@@ -433,11 +469,9 @@ void CControlDialog::on_upButton_clicked() {
     }
 
     for (int nodeId: selectNodeList) {
-        double curLat = mManager->agent(nodeId)->data("GLOBAL_LAT").toDouble();
-        double curLon = mManager->agent(nodeId)->data("GLOBAL_LON").toDouble();
-        double curAlt = mManager->agent(nodeId)->data("GLOBAL_ALT").toDouble();
-        mManager->agent(nodeId)->cmd("MOVE", curLat, curLon, curAlt + ui->controlSpinBox->value(),
-                                     ui->headingSpinBox->value());
+        QVector3D controlValue = QVector3D(0.0, 0.0, ui->controlSpinBox->value());
+
+        sendCommand(nodeId, controlValue, ui->headingSpinBox->value());
         addHistory(QString("UP to %1(m)").arg(ui->controlSpinBox->value()), nodeId);
     }
 }
@@ -450,11 +484,9 @@ void CControlDialog::on_downButton_clicked() {
     }
 
     for (int nodeId: selectNodeList) {
-        double curLat = mManager->agent(nodeId)->data("GLOBAL_LAT").toDouble();
-        double curLon = mManager->agent(nodeId)->data("GLOBAL_LON").toDouble();
-        double curAlt = mManager->agent(nodeId)->data("GLOBAL_ALT").toDouble();
-        mManager->agent(nodeId)->cmd("MOVE", curLat, curLon, curAlt - ui->controlSpinBox->value(),
-                                     ui->headingSpinBox->value());
+        QVector3D controlValue = QVector3D(0.0, 0.0, -ui->controlSpinBox->value());
+
+        sendCommand(nodeId, controlValue, ui->headingSpinBox->value());
         addHistory(QString("DOWN to %1(m)").arg(ui->controlSpinBox->value()), nodeId);
     }
 }
@@ -467,27 +499,10 @@ void CControlDialog::on_minusYButton_clicked() {
     }
 
     for (int nodeId: selectNodeList) {
-        double curLat = mManager->agent(nodeId)->data("GLOBAL_LAT").toDouble();
-        double curLon = mManager->agent(nodeId)->data("GLOBAL_LON").toDouble();
-        double curAlt = mManager->agent(nodeId)->data("GLOBAL_ALT").toDouble();
-        QVector3D refLLH = mManager->agent(nodeId)->data("REF_LLH").value<QVector3D>();
+        QVector3D controlValue = QVector3D(0.0, -ui->controlSpinBox->value(), 0.0);
 
-
-        QGeoCoordinate curQGeo(curLat, curLon, curAlt);
-        QGeoCoordinate refQGeo(refLLH.x(), refLLH.y(), refLLH.z());
-
-        QVector3D newPosQVector = LLH2NED(curQGeo, refQGeo);
-        newPosQVector.setY(newPosQVector.y() - ui->controlSpinBox->value());
-
-        QGeoCoordinate newPositionGeo = NED2LLH(newPosQVector, refQGeo);
-
-        if (newPositionGeo.isValid()) {
-            mManager->agent(nodeId)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
-                                         newPositionGeo.altitude(), ui->headingSpinBox->value());
+        sendCommand(nodeId, controlValue, ui->headingSpinBox->value());
             addHistory(QString("MOVE -y %1(m)").arg(ui->controlSpinBox->value()), nodeId);
-        } else {
-            addHistory(QString("Failed to move: Invalid newPositionGeo coordinates"), nodeId);
-        }
     }
 }
 
@@ -499,25 +514,10 @@ void CControlDialog::on_plusYButton_clicked() {
     }
 
     for (int nodeId: selectNodeList) {
-        double curLat = mManager->agent(nodeId)->data("GLOBAL_LAT").toDouble();
-        double curLon = mManager->agent(nodeId)->data("GLOBAL_LON").toDouble();
-        double curAlt = mManager->agent(nodeId)->data("GLOBAL_ALT").toDouble();
-        QVector3D refLLH = mManager->agent(nodeId)->data("REF_LLH").value<QVector3D>();
+        QVector3D controlValue = QVector3D(0.0, ui->controlSpinBox->value(), 0.0);
 
-        QGeoCoordinate curQGeo(curLat, curLon, curAlt);
-        QGeoCoordinate refQGeo(refLLH.x(), refLLH.y(), refLLH.z());
-
-        QVector3D newPosQVector = LLH2NED(curQGeo, refQGeo);
-        newPosQVector.setY(newPosQVector.y() + ui->controlSpinBox->value());
-        QGeoCoordinate newPositionGeo = NED2LLH(newPosQVector, refQGeo);
-
-        if (newPositionGeo.isValid()) {
-            mManager->agent(nodeId)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
-                                         newPositionGeo.altitude(), ui->headingSpinBox->value());
+        sendCommand(nodeId, controlValue, ui->headingSpinBox->value());
             addHistory(QString("MOVE +y %1(m)").arg(ui->controlSpinBox->value()), nodeId);
-        } else {
-            addHistory(QString("Failed to move: Invalid newPositionGeo coordinates"), nodeId);
-        }
     }
 }
 
@@ -529,25 +529,10 @@ void CControlDialog::on_minusXButton_clicked() {
     }
 
     for (int nodeId: selectNodeList) {
-        double curLat = mManager->agent(nodeId)->data("GLOBAL_LAT").toDouble();
-        double curLon = mManager->agent(nodeId)->data("GLOBAL_LON").toDouble();
-        double curAlt = mManager->agent(nodeId)->data("GLOBAL_ALT").toDouble();
-        QVector3D refLLH = mManager->agent(nodeId)->data("REF_LLH").value<QVector3D>();
+        QVector3D controlValue = QVector3D(-ui->controlSpinBox->value(), 0.0, 0.0);
 
-        QGeoCoordinate curQGeo(curLat, curLon, curAlt);
-        QGeoCoordinate refQGeo(refLLH.x(), refLLH.y(), refLLH.z());
-
-        QVector3D newPosQVector = LLH2NED(curQGeo, refQGeo);
-        newPosQVector.setX(newPosQVector.x() - ui->controlSpinBox->value());
-        QGeoCoordinate newPositionGeo = NED2LLH(newPosQVector, refQGeo);
-
-        if (newPositionGeo.isValid()) {
-            mManager->agent(nodeId)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
-                                         newPositionGeo.altitude(), ui->headingSpinBox->value());
+        sendCommand(nodeId, controlValue, ui->headingSpinBox->value());
             addHistory(QString("MOVE -x %1(m)").arg(ui->controlSpinBox->value()), nodeId);
-        } else {
-            addHistory(QString("Failed to move: Invalid newPositionGeo coordinates"), nodeId);
-        }
     }
 }
 
@@ -559,6 +544,32 @@ void CControlDialog::on_plusXButton_clicked() {
     }
 
     for (int nodeId: selectNodeList) {
+        QVector3D controlValue = QVector3D(ui->controlSpinBox->value(), 0.0, 0.0);
+
+        sendCommand(nodeId, controlValue, ui->headingSpinBox->value());
+        addHistory(QString("MOVE +x %1(m)").arg(ui->controlSpinBox->value()), nodeId);
+    }
+}
+
+void CControlDialog::on_pushButton_clicked() {
+    if (selectNodeList.isEmpty()) {
+        qDebug() << "Select Drone(s) First!";
+        return;
+    }
+
+    for (int nodeId: selectNodeList) {
+        QVector3D controlValue = QVector3D(ui->movetoX->value(), ui->movetoY->value(), ui->movetoZ->value());
+
+        sendCommand(nodeId, controlValue, ui->headingSpinBox->value());
+        addHistory(QString("MOVE to %1, %2, %3").arg(controlValue.x()).arg(controlValue.y()).arg(controlValue.z()),
+                   nodeId);
+    }
+}
+
+void CControlDialog::sendCommand(int nodeId, QVector3D controlValue, double heading) {
+    QString currentControlType = ui->type_comboBox->currentText();
+
+    if (currentControlType == "Control") {
         double curLat = mManager->agent(nodeId)->data("GLOBAL_LAT").toDouble();
         double curLon = mManager->agent(nodeId)->data("GLOBAL_LON").toDouble();
         double curAlt = mManager->agent(nodeId)->data("GLOBAL_ALT").toDouble();
@@ -568,43 +579,36 @@ void CControlDialog::on_plusXButton_clicked() {
         QGeoCoordinate refQGeo(refLLH.x(), refLLH.y(), refLLH.z());
 
         QVector3D newPosQVector = LLH2NED(curQGeo, refQGeo);
-        newPosQVector.setX(newPosQVector.x() + ui->controlSpinBox->value());
+
+        newPosQVector.setX(newPosQVector.x() + controlValue.x());
+        newPosQVector.setY(newPosQVector.y() + controlValue.y());
+
         QGeoCoordinate newPositionGeo = NED2LLH(newPosQVector, refQGeo);
 
         if (newPositionGeo.isValid()) {
             mManager->agent(nodeId)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
-                                         newPositionGeo.altitude(), ui->headingSpinBox->value());
-            addHistory(QString("MOVE +x %1(m)").arg(ui->controlSpinBox->value()), nodeId);
+                                         newPositionGeo.altitude() + controlValue.z(), heading);
         } else {
             addHistory(QString("Failed to move: Invalid newPositionGeo coordinates"), nodeId);
         }
+
+    } else if (currentControlType == "Offboard") {
+        QVector3D lpos = mManager->agent(nodeId)->data("POS").value<QVector3D>();
+        QVector3D sp = QVector3D(lpos.x() + controlValue.x(),
+                                 lpos.y() + controlValue.y(),
+                                 lpos.z() + controlValue.z());
+
+        mManager->agent(nodeId)->cmd("SETPOINT", sp, heading);
     }
 }
 
-
-void CControlDialog::on_pushButton_clicked() {
+void CControlDialog::sendOCMInterval() {
     if (selectNodeList.isEmpty()) {
         qDebug() << "Select Drone(s) First!";
         return;
     }
 
     for (int nodeId: selectNodeList) {
-        QVector3D newPosQVector = QVector3D(ui->movetoX->value(), ui->movetoY->value(), ui->movetoZ->value());
-        QVector3D refLLH = mManager->agent(nodeId)->data("REF_LLH").value<QVector3D>();
-
-        QGeoCoordinate refQGeo(refLLH.x(), refLLH.y(), refLLH.z());
-
-        QGeoCoordinate newPositionGeo = NED2LLH(newPosQVector, refQGeo);
-
-        if (newPositionGeo.isValid()) {
-            mManager->agent(nodeId)->cmd("MOVE", newPositionGeo.latitude(), newPositionGeo.longitude(),
-                                         newPositionGeo.altitude(), ui->headingSpinBox->value());
-            addHistory(
-                    QString("MOVE to %1, %2, %3").arg(newPosQVector.x()).arg(newPosQVector.y()).arg(newPosQVector.z()),
-                    nodeId);
-        } else {
-            addHistory(QString("Failed to move: Invalid newPositionGeo coordinates"), nodeId);
-        }
+        mManager->agent(nodeId)->cmd("OCM_POS");
     }
 }
-

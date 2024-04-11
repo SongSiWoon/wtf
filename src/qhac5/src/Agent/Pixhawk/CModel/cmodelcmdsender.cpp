@@ -112,6 +112,25 @@ void CCModelCmdSender::reposition(double lat, double lng, double altitude, doubl
     mAgent->dataROS()->publishCommand(reposition_cmd);
 }
 
+void CCModelCmdSender::setpoint(double x, double y, double z, double yaw)
+{
+    auto setpoint = px4_msgs::msg::TrajectorySetpoint();
+
+    setpoint.position[0] = x;
+    setpoint.position[1] = y;
+    setpoint.position[2] = -z;
+    setpoint.velocity[0] = (float) NAN;
+    setpoint.velocity[1] = (float) NAN;
+    setpoint.velocity[2] = (float) NAN;
+    setpoint.acceleration[0] = (float) NAN;
+    setpoint.acceleration[1] = (float) NAN;
+    setpoint.acceleration[2] = (float) NAN;
+    setpoint.yaw = yaw;
+    setpoint.yawspeed = (float) NAN;
+
+    mAgent->dataROS()->publishTrajectroySetpoint(setpoint);
+}
+
 void CCModelCmdSender::arm()
 {
     auto arm_cmd = px4_msgs::msg::VehicleCommand();
@@ -140,6 +159,23 @@ int CCModelCmdSender::reboot()
     mAgent->data()->resetAck();
     mReboot = true;
 
+    return 0;
+}
+
+int CCModelCmdSender::resetLpos(double lat, double lon, double alt)
+{
+    auto reset_cmd = px4_msgs::msg::VehicleCommand();
+    reset_cmd.target_system = mAgent->sysID();
+    reset_cmd.command = px4_msgs::msg::VehicleCommand::VEHICLE_CMD_SET_GPS_GLOBAL_ORIGIN;
+    reset_cmd.param1 = 0.0;
+    reset_cmd.param2 = 0.0;
+    reset_cmd.param3 = 0.0;
+    reset_cmd.param4 = 0.0;
+    reset_cmd.param5 = lat;
+    reset_cmd.param6 = lon;
+    reset_cmd.param7 = alt;
+
+    mAgent->dataROS()->publishCommand(reset_cmd);
     return 0;
 }
 
@@ -303,6 +339,21 @@ float CCModelCmdSender::target(CCModelCmdSender::Target aType)
             qDebug("ERROR: Invalid target %d", aType);
             break;
     }
+    return 0;
+}
+
+int CCModelCmdSender::offboard_position_mode()
+{
+    auto ocm = px4_msgs::msg::OffboardControlMode();
+
+    ocm.position = true;
+    ocm.velocity = false;
+    ocm.acceleration = false;
+    ocm.attitude = false;
+    ocm.body_rate = false;
+    ocm.actuator = false;
+
+    mAgent->dataROS()->publishOffboardControlMode(ocm);
     return 0;
 }
 

@@ -97,6 +97,13 @@ int CCModelAgent::cmd(const char *aCmd, QVariant aArg1, QVariant aArg2, QVariant
         mSender->reposition(pos.latitude(), pos.longitude(), pos.altitude(), aArg2.toDouble());
         qDebug() << "NED : " << pos;
     }
+    else if (item == "SETPOINT" ) {
+        // arg1 : NEU position <QVector3D>
+        // arg2 : heading <double>
+
+        QVector3D sp = aArg1.value<QVector3D>();
+        mSender->setpoint(sp.x(), sp.y(), sp.z(), aArg2.toDouble());
+    }
     else if (item == "TAKEOFF" ) {
         double lat = data("GLOBAL_LAT").toDouble();
         double lon = data("GLOBAL_LON").toDouble();
@@ -114,6 +121,9 @@ int CCModelAgent::cmd(const char *aCmd, QVariant aArg1, QVariant aArg2, QVariant
     }
     else if ( item == "MANUAL" ) {
         mSender->manual();
+    }
+    else if ( item == "OCM_POS" ) {
+        mSender->offboard_position_mode();
     }
 	else if ( item == "CALIB_GYRO") {
 		mSender->calib_gyro();
@@ -136,6 +146,12 @@ int CCModelAgent::cmd(const char *aCmd, QVariant aArg1, QVariant aArg2, QVariant
 	else if ( item == "REBOOT") {
 		mSender->reboot();
 	}
+    else if ( item == "RESET_LPOS") {
+        double lat = data("GLOBAL_LAT").toDouble();
+        double lon = data("GLOBAL_LON").toDouble();
+        double alt = data("GLOBAL_ALT").toDouble();
+        mSender->resetLpos(lat, lon, alt);
+    }
     else if ( item == "START_GST") {
         if (!data("IS_GST_RUNNING").toBool())
             mSender->startStreamCmd();

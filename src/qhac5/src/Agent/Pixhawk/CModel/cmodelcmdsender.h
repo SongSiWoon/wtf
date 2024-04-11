@@ -36,10 +36,13 @@ public:
     void landing();
     void reposition(double lat, double lng, double yaw, double altitude);
     int reboot();
+    int resetLpos(double lat, double lon, double alt);
     int offboard();
     int automission();
     int manual();
+    int offboard_position_mode();
     int move(float aX, float aY, float aZ, float aHead);
+    void setpoint(double x, double y, double z, double yaw);
     int requestParam(const QString aName);
     int setParam(const QString aName, const QVariant aValue);
     QList<QString> getParamRequested();

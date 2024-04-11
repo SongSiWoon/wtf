@@ -636,6 +636,8 @@ void CROSData::initSubscription()
     std::string topic_prefix_pub = ros2Header + std::to_string(mAgent->data("SYSID").toInt()) + "/fmu/in";
 
     mCommandQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::VehicleCommand>(topic_prefix_pub + "/vehicle_command", qos_cmd);
+    mOffboardCommandModeQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::OffboardControlMode>(topic_prefix_pub + "/offboard_control_mode", qos_cmd);
+    mTrajectorySetpointQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::TrajectorySetpoint>(topic_prefix_pub + "/trajectory_setpoint", qos_cmd);
     mUavcanParameterRequestQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::UavcanParameterRequest>(topic_prefix_pub + "/uavcan_parameter_request", rclcpp::SystemDefaultsQoS());
 
     // Agent Manager
@@ -659,6 +661,14 @@ void CROSData::initSubscription()
 
 void CROSData::publishCommand(px4_msgs::msg::VehicleCommand command) {
     mCommandQHACPub_->publish(command);
+}
+
+void CROSData::publishOffboardControlMode(px4_msgs::msg::OffboardControlMode command) {
+    mOffboardCommandModeQHACPub_->publish(command);
+}
+
+void CROSData::publishTrajectroySetpoint(px4_msgs::msg::TrajectorySetpoint setpoint) {
+    mTrajectorySetpointQHACPub_->publish(setpoint);
 }
 
 void CROSData::publishRequestParam(px4_msgs::msg::UavcanParameterRequest req) {
