@@ -52,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // FIXME: dynamic change according to the drone position
 //    ui->mapView->moveByGPS(36.37501576001398, 127.35263774974969, 19);
-    ui->mapView->moveByGPS(36.4537, 127.406, 19);
+    ui->mapView->moveByGPS(36.62429060206151, 127.456555875553, 19); // CBNU
 
     QPushButton *recenterButton = new QPushButton("Recenter Map", this);
     ui->mainToolBar->addWidget(recenterButton);
@@ -301,14 +301,18 @@ void MainWindow::procInitTreeWidget()
     strItemList << "MODE"
                 << "READY_TO_FLY_FROM_MONITORING"
                 << "Battery"
-                << "RTK_STATUS"
-                //				<< "RTK"
-                << "MONITORING_STATUS1_HEX"
                 << "LocalPos"
+                << "RTK_POS"
+                << "GLOBAL_POS"
+                << "RTK_STATUS"
+                << "RTK_READY"
+                << "RTKGPS_BASE_RECV"
+                << "MONITORING_STATUS1_HEX"
+
                 //                << "Battery"  << "LocalVel" << "ATTITUDE"
-                << "PX4_OSMO_BATT"
+//                << "PX4_OSMO_BATT"
                 //                << "RTK_TOW"
-                << "SHIFT_STATE"
+//                << "SHIFT_STATE"
 //                << "PARAM_STATUS"
             ;
 

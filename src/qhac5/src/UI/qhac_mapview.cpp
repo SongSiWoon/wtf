@@ -25,7 +25,7 @@ MapCache::MapCache(int zoom, int x, int y)
         img.load(_fileInfo.absoluteFilePath());
 
         // convert color to gray
-        img = img.convertToFormat(QImage::Format_Grayscale8);
+//        img = img.convertToFormat(QImage::Format_Grayscale8);
 
         // convert QImage to QPixel
         _image.convertFromImage(img);

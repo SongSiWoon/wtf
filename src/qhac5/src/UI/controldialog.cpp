@@ -327,7 +327,7 @@ float CControlDialog::targetXYDistance(int mAgentId) {
 void CControlDialog::updateTypeCombobox(QString aType) {
     if (aType == "Offboard") {
         ui->offboardButton->show();
-        ocmTimer->start(400);
+        ocmTimer->start(100);
     } else {
         ui->offboardButton->hide();
         ocmTimer->stop();
