@@ -62,6 +62,18 @@ QVariant CROSData::data(const QString &aItem)
              .arg((double)mMonitoringRos.pos_y,6,'f',2)
              .arg((double)-mMonitoringRos.pos_z,6,'f',2);
     }
+    else if  ( item == "RTK_POS" ) {
+        return QString("%1,%2,%3")
+                .arg((double)mMonitoringRos.rtk_n,6,'f',2)
+                .arg((double)mMonitoringRos.rtk_e,6,'f',2)
+                .arg((double)mMonitoringRos.rtk_d,6,'f',2);
+    }
+    else if  ( item == "GLOBAL_POS" ) {
+        return QString("%1,%2,%3")
+                .arg((double)mMonitoringRos.lat,6,'f',6)
+                .arg((double)mMonitoringRos.lon,6,'f',6)
+                .arg((double)mMonitoringRos.alt,6,'f',6);
+    }
     else if ( item == "LOCALVEL" ) {
         return "";
     }
@@ -79,6 +91,9 @@ QVariant CROSData::data(const QString &aItem)
         return "";
     }
     else if ( item == "MODE") {
+        if (!mRecvTime_Monitoring) {
+            return QString("DISCONNECT");
+        }
         QString mode = "UNKNOWN";
         if(monitoringFlag(mMonitoringRos.status1, MANUAL_MODE))
             mode = "MANUAL";
@@ -168,9 +183,9 @@ QVariant CROSData::data(const QString &aItem)
 	else if (item == "RTK_STATUS" ) {
          bool rtk_lv1 = monitoringFlag(mMonitoringRos.status1, CROSData::AGE_CORR_LV1_PROBLEM);
          bool rtk_lv2 = monitoringFlag(mMonitoringRos.status1, CROSData::AGE_CORR_LV2_PROBLEM);
-         return QString("nBase:%1, nRover:%2 Flag:%3(%4:%5)")
-                .arg(mMonitoringRos.rtk_nbase)
+         return QString("nRover:%1, JammingState:%2 Flag:%3 (%4:%5)")
                 .arg(mMonitoringRos.rtk_nrover)
+                .arg(this->data("RTK_JAMMING").toBool())
                 .arg(this->data("RTK_FIXED").toBool())
                 .arg(rtk_lv1)
                 .arg(rtk_lv2);
@@ -183,25 +198,31 @@ QVariant CROSData::data(const QString &aItem)
          return mMonitoringRos.tow*0.001f;
 	}
     else if (item == "GLOBAL_LAT") { //TODO: Monitoring LLA
-        return (double) mVehicleGPSPosition.lat * 1e-7;
+        return (double) mMonitoringRos.lat;
     }
     else if (item == "GLOBAL_LON") {
-        return (double) mVehicleGPSPosition.lon * 1e-7;
+        return (double) mMonitoringRos.lon;
     }
     else if (item == "GLOBAL_ALT") {
-        return (double) mVehicleGPSPosition.alt * 1e-3;
+        return (double) mMonitoringRos.alt;
     }
     else if (item == "REF_LLH" ) {
-        return QVector3D((double)mVehicleLocalPosition.ref_lat, (double)mVehicleLocalPosition.ref_lon, (double)mVehicleLocalPosition.ref_alt);
+        return QVector3D((double)mMonitoringRos.ref_lat, (double)mMonitoringRos.ref_lon, (double)mMonitoringRos.ref_alt);
     }
     else if (item == "LLH" ) {
-        return QVector3D((double)mVehicleGPSPosition.lat * 1e-7, (double)mVehicleGPSPosition.lon * 1e-7, (double)mVehicleGPSPosition.alt * 1e-3);
+        return QVector3D((double)mMonitoringRos.lat, (double)mMonitoringRos.lon, (double)mMonitoringRos.alt);
     }
 	else if (item == "RTK_FIXED") {
          return monitoringFlag(mMonitoringRos.status1, RTKGPS_FIXED_MODE);
 	}
+    else if (item == "RTK_JAMMING") {
+        return monitoringFlag(mMonitoringRos.status1, RTKGPS_JAMMING);
+    }
     else if (item == "RTK_READY") {
          return monitoringFlag(mMonitoringRos.status1, RTKGPS_FIXED_MODE) == 1 ? "YES" : "NO";
+    }
+    else if (item == "RTKGPS_BASE_RECV") {
+        return monitoringFlag(mMonitoringRos.status1, RTKGPS_BASE_RECV) == 1 ? "YES" : "NO";
     }
 	else if (item == "RTK_N") {
 		return (float)mRTK.baseline_a_mm * 0.001f;
@@ -233,6 +254,7 @@ QVariant CROSData::data(const QString &aItem)
     else if ( item == "MSG_INTERVAL_TIME") {
         qint64 t = QDateTime::currentMSecsSinceEpoch();
         if ((t - mRecvTime_Monitoring) > 10000 ) {
+            resetAllData();
             mCommFlag = false;
         }
         return t - mRecvTime_Monitoring;
@@ -440,13 +462,19 @@ void CROSData::updateMonitoring(const px4_msgs::msg::Monitoring::SharedPtr msg)
     mRecvTime_Monitoring = QDateTime::currentMSecsSinceEpoch();
     mMonitoringRos.timestamp = msg->timestamp;
     mMonitoringRos.battery = msg->battery;
+    mMonitoringRos.lat = msg->lat;
+    mMonitoringRos.lon = msg->lon;
+    mMonitoringRos.alt = msg->alt;
+    mMonitoringRos.ref_lat = msg->ref_lat;
+    mMonitoringRos.ref_lon = msg->ref_lon;
+    mMonitoringRos.ref_alt = msg->ref_alt;
     mMonitoringRos.pos_x = msg->pos_x;
     mMonitoringRos.pos_y = msg->pos_y;
     mMonitoringRos.pos_z = msg->pos_z;
     mMonitoringRos.head = msg->head;
-//    mMonitoringRos.lat = msg->lat;
-//    mMonitoringRos.lon = msg->lon;
-//    mMonitoringRos.alt = msg->alt;
+    mMonitoringRos.rtk_n = msg->rtk_n;
+    mMonitoringRos.rtk_e = msg->rtk_e;
+    mMonitoringRos.rtk_d = msg->rtk_d;
     mMonitoringRos.rtk_nbase = msg->rtk_nbase;
     mMonitoringRos.rtk_nrover = msg->rtk_nrover;
     mMonitoringRos.status1 = msg->status1;
@@ -684,4 +712,13 @@ void CROSData::setAgentBaseDiffAlt(double alt) {
 
 void CROSData::onTimeout()
 {
+}
+
+void CROSData::resetAllData()
+{
+    mStatusRos = px4_msgs::msg::VehicleStatus();
+    mVehicleCommandAck = px4_msgs::msg::VehicleCommandAck();
+    mVehicleLocalPosition = px4_msgs::msg::VehicleLocalPosition();
+    mVehicleGPSPosition = px4_msgs::msg::SensorGps();
+    mMonitoringRos = px4_msgs::msg::Monitoring();
 }

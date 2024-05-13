@@ -41,43 +41,46 @@ public:
     enum MonitoringFlagType {
         SAFETY_LOCK_STATUS = 0,
         ARM_STATUS,
+
         OFFBOARD_MODE,
         MANUAL_MODE,
-
         AUTO_MODE,
         FAIL_SAFE_MODE,
-        BATTERY_PROBLEM,
-        RTKGPS_CONNECTION,
 
-        RTKGPS_BASE_RECV,
+        BATTERY_PROBLEM,                // When the battery is below 25%
+
+        RTKGPS_JAMMING,                 // Not used
+        RTKGPS_BASE_RECV,               // Not used
         RTKGPS_FIXED_MODE,
-        RTKGPS_OFFSET,
-        COMM_PROBLEM,
+        RTKGPS_OFFSET,                  // Not used
 
-        INIT_PITCH_PROBLEM,
-        INIT_ROLL_PROBLEM,
-        INIT_VELX_PROBLEM,
-        INIT_VELY_PROBLEM,
+        COMM_PROBLEM,                   // Not used
 
-        INIT_VELZ_PROBLEM,
-        INIT_EMBEDDED_SC_OFFSET,
-        INIT_EMBEDDED_SC_FILE,
-        INIT_EMBEDDED_SC_START_TIME,
+        INIT_PITCH_PROBLEM,             // Not used
+        INIT_ROLL_PROBLEM,              // Not used
+        INIT_VELX_PROBLEM,              // Not used
+        INIT_VELY_PROBLEM,              // Not used
+        INIT_VELZ_PROBLEM,              // Not used
 
-        PERI_5V_POWER_PROBLEM,
-        TEMPERATURE_PROBLEM,
-        INAV_BIAS_XY_PROBLEM,
-        INAV_BIAS_Z_PROBLEM,
+        INIT_EMBEDDED_SC_OFFSET,        // Receiving the offset x, y values in the scenario config
+        INIT_EMBEDDED_SC_FILE,          // Scenario file read operation successful
+        INIT_EMBEDDED_SC_LENGTH_ERR,    // Indicates a mismatch between file size and embedded scenario length
+        INIT_EMBEDDED_SC_CRC_ERR,       // When the scenario length written in the header and the actual scenario length are different
+        INIT_EMBEDDED_SC_PAYLOAD_ERR,   // When '0xAA'byte missing start of each payload
+        INIT_EMBEDDED_SC_START_TIME,    // When the CRC value written in the scenario differs from the calculated CRC value
 
-        MAG_INCONSISTENT_PROBLEM,
-        ACC_INCONSISTENT_PROBLEM,
-        GYR_INCONSISTENT_PROBLEM,
+        PERI_5V_POWER_PROBLEM,          // System power row or high
+
+        TEMPERATURE_PROBLEM,            // Not used
+
+        MAG_INCONSISTENT_PROBLEM,       // Not used
+        ACC_INCONSISTENT_PROBLEM,       // Not used
+        GYR_INCONSISTENT_PROBLEM,       // Not used
+
         AGE_CORR_LV1_PROBLEM,
-
         AGE_CORR_LV2_PROBLEM,
-        STATUS_LANDED,
 
-        NUM_OF_MONITORING
+        NUM_OF_MONITORING               // Not used
     };
     Q_ENUM(MonitoringFlagType);
 
@@ -148,6 +151,7 @@ private:
     ushort toUShort(const QByteArray& aBuffer);
     void update_param_value(const mavlink_message_t* aMsg);
 
+    void CROSData::resetAllData();
 private:
     IAgent*                     mAgent;
     FileManager*                mFTP;
