@@ -271,9 +271,9 @@ int CCModelCmdSender::offboard()
     auto offboard_cmd = px4_msgs::msg::VehicleCommand();
     offboard_cmd.target_system = mAgent->sysID();
     offboard_cmd.command = px4_msgs::msg::VehicleCommand::VEHICLE_CMD_DO_SET_MODE;
-    offboard_cmd.confirmation = true;
-    offboard_cmd.param1 = mode;
+    offboard_cmd.param1 = 1;
     offboard_cmd.param2 = PX4_CUSTOM_MAIN_MODE_OFFBOARD;
+    offboard_cmd.from_external = true;
 
     mAgent->dataROS()->publishCommand(offboard_cmd);
     return 0;

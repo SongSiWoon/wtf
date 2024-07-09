@@ -13,6 +13,10 @@ using std::placeholders::_1;
 #define RAD2DEG		(57.0)
 #define DEG2RAD     (0.0174533)
 
+static int64_t get_current_timestamp() {
+    return std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
+}
+
 CROSData::CROSData(IAgent* agent, QObject* parent)
     : QObject(parent), mAgent(agent)
 {
@@ -90,6 +94,9 @@ QVariant CROSData::data(const QString &aItem)
     else if ( item == "STATE" ) {
         return "";
     }
+    else if ( item == "ARMING_STATE" ) {
+        return monitoringFlag(mMonitoringRos.status1, ARM_STATUS) == 1 ? "ARM" : "DISARM";
+    }
     else if ( item == "MODE") {
         if (!mRecvTime_Monitoring) {
             return QString("DISCONNECT");
@@ -102,7 +109,7 @@ QVariant CROSData::data(const QString &aItem)
         else if(monitoringFlag(mMonitoringRos.status1, AUTO_MODE))
             mode = "AUTO";
 
-        return QString("%1, ARM:%2, GST:%3").arg(mStrNavStateList[mStatusRos.nav_state]).arg(monitoringFlag(mMonitoringRos.status1, ARM_STATUS) == true).arg(mGstRunning);
+        return QString("%1, %2").arg(mStrNavStateList[mMonitoringRos.nav_state]).arg(this->data("ARMING_STATE").toString());
     }
     else if ( item == "ISARMED") {
         return monitoringFlag(mMonitoringRos.status1, ARM_STATUS);
@@ -479,6 +486,7 @@ void CROSData::updateMonitoring(const px4_msgs::msg::Monitoring::SharedPtr msg)
     mMonitoringRos.rtk_nrover = msg->rtk_nrover;
     mMonitoringRos.status1 = msg->status1;
     mMonitoringRos.status2 = msg->status2;
+    mMonitoringRos.nav_state = msg->nav_state;
 
     if (mCommFlag == false) {
         qDebug() << "Connection Get for #" << this->mAgent->data("SYSID") << ". Change Setpoint";
@@ -663,9 +671,9 @@ void CROSData::initSubscription()
 
     std::string topic_prefix_pub = ros2Header + std::to_string(mAgent->data("SYSID").toInt()) + "/fmu/in";
 
-    mCommandQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::VehicleCommand>(topic_prefix_pub + "/vehicle_command", qos_cmd);
+    mCommandQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::VehicleCommand>(topic_prefix_pub + "/vehicle_command", 10);
     mOffboardCommandModeQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::OffboardControlMode>(topic_prefix_pub + "/offboard_control_mode", qos_cmd);
-    mTrajectorySetpointQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::TrajectorySetpoint>(topic_prefix_pub + "/trajectory_setpoint", qos_cmd);
+    mTrajectorySetpointQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::TrajectorySetpoint>(topic_prefix_pub + "/trajectory_setpoint", 10);
     mUavcanParameterRequestQHACPub_ = mQHAC3Node->create_publisher<px4_msgs::msg::UavcanParameterRequest>(topic_prefix_pub + "/uavcan_parameter_request", rclcpp::SystemDefaultsQoS());
 
     // Agent Manager
@@ -688,6 +696,7 @@ void CROSData::initSubscription()
 }
 
 void CROSData::publishCommand(px4_msgs::msg::VehicleCommand command) {
+    command.from_external = true;
     mCommandQHACPub_->publish(command);
 }
 

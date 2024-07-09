@@ -300,12 +300,12 @@ void MainWindow::procInitTreeWidget()
 
     strItemList << "MODE"
                 << "READY_TO_FLY_FROM_MONITORING"
+                << "RTK_READY"
                 << "Battery"
                 << "LocalPos"
                 << "RTK_POS"
                 << "GLOBAL_POS"
                 << "RTK_STATUS"
-                << "RTK_READY"
                 << "RTKGPS_BASE_RECV"
                 << "MONITORING_STATUS1_HEX"
 

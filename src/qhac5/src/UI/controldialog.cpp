@@ -400,7 +400,7 @@ void CControlDialog::on_offboardButton_clicked()
     for (int nodeId: selectNodeList) {
         double heading = mManager->agent(nodeId)->data("HEADING").toDouble();
 
-        sendCommand(nodeId, QVector3D(0.0, 0.0, 0.0), heading);
+        sendCommand(nodeId, QVector3D(0.0, 0.0, -1.0), heading);
 
         mManager->agent(nodeId)->cmd("OFFBOARD");
         addHistory(QString("OFFBOARD %1").arg(nodeId), nodeId);
@@ -609,6 +609,6 @@ void CControlDialog::sendOCMInterval() {
     }
 
     for (int nodeId: selectNodeList) {
-        mManager->agent(nodeId)->cmd("OCM_POS");
+        //mManager->agent(nodeId)->cmd("OCM_POS");
     }
 }
